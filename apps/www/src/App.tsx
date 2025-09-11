@@ -1,7 +1,12 @@
+import { GameProvider } from './GameContext'
 import SolarSystemMap from './SolarSystemMap'
 
 function App() {
-  return <SolarSystemMap />
+  return (
+    <GameProvider>
+      <SolarSystemMap />
+    </GameProvider>
+  )
 }
 
 export default App

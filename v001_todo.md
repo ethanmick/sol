@@ -20,9 +20,9 @@
 
 ## Phase 3: Client Frontend (`apps/www/`)
 
-- [ ] Install Hono client dependencies
-- [ ] Configure pnpm workspace imports from server
-- [ ] Type-safe API service using Hono RPC client
+- [x] Configure pnpm workspace imports from packages/api
+- [x] Type-safe API service using RPC client (`fetch` based)
+- [x] Create global context for holding game state + hooks to get the state or make an RPC
 - [ ] React components for game view
 - [ ] Canvas/SVG rendering of space
 - [ ] Polling service (fetch every 1s) with full type safety
