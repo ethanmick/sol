@@ -2,14 +2,14 @@
 
 ## Phase 1: Shared Package Foundation (`packages/game/`)
 
-- [ ] Create shared package with Zod schemas
-- [ ] Define Player, Corporation, Ship, Node schemas
-- [ ] Export TypeScript types from schemas
-- [ ] Set up proper package.json and exports
+- [x] Create shared package with Zod schemas
+- [x] Define Player, Corporation, Ship, Node schemas
+- [x] Export TypeScript types from schemas
+- [x] Set up proper package.json and exports
 
 ## Phase 2: Server Foundation (`apps/server/`)
 
-- [ ] Hono server with TypeScript setup
+- [x] Hono server with TypeScript setup (`apps/server`)
 - [ ] Import shared schemas from packages/game
 - [ ] In-memory game state management
 - [ ] Basic orbital mechanics implementation
