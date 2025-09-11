@@ -10,13 +10,13 @@
 ## Phase 2: Server Foundation (`apps/server/`)
 
 - [x] Hono server with TypeScript setup (`apps/server`)
-- [ ] Import shared schemas from packages/game
-- [ ] In-memory game state management
-- [ ] Basic orbital mechanics implementation
-- [ ] Ship movement simulation
-- [ ] Tick-based simulation loop (5 Hz)
-- [ ] Hono RPC API endpoints with zValidator
-- [ ] Export AppType for client consumption
+- [x] Import shared schemas from packages/game
+- [x] In-memory game state management
+- [x] Basic orbital mechanics implementation
+- [x] Ship movement simulation
+- [x] Tick-based simulation loop (5 Hz)
+- [x] Hono RPC API endpoints with zValidator
+- [x] Export AppType for client consumption
 
 ## Phase 3: Client Frontend (`apps/www/`)
 

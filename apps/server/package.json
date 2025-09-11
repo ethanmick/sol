@@ -7,8 +7,11 @@
     "start": "node dist/index.js"
   },
   "dependencies": {
+    "@game/schemas": "workspace:*",
     "@hono/node-server": "^1.19.2",
-    "hono": "^4.9.6"
+    "@hono/zod-validator": "^0.4.1",
+    "hono": "^4.9.6",
+    "zod": "^3.22.4"
   },
   "devDependencies": {
     "@types/node": "^20.11.17",
