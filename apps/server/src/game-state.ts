@@ -1,4 +1,4 @@
-import type { Corporation, GameState, Node, Player, Ship } from '@game/schemas'
+import type { Corporation, GameState, Node, Player, Ship } from '@space/api'
 
 // Global constants from v001.md
 export const CONSTANTS = {

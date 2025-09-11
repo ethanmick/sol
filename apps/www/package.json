@@ -10,6 +10,7 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@space/api": "workspace:*",
     "pixi-viewport": "^6.0.3",
     "pixi.js": "^8.13.2",
     "react": "^19.1.1",

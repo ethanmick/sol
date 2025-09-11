@@ -1,169 +1,211 @@
 import { zValidator } from '@hono/zod-validator'
+import { ApiRequestSchema, type ApiRequest, type ApiResponse } from '@space/api'
 import { Hono } from 'hono'
-import { z } from 'zod'
 import { gameState } from './game-state.js'
 import { simulation } from './simulation.js'
 
-// Create Hono app with typed routes
-export const api = new Hono()
-  // Get current game state
-  .get('/api/game/state', (c) => {
-    const currentState = gameState.getGameState()
-    return c.json(currentState) // Type-safe response using GameStateSchema
-  })
+// Create Hono app with single JSON API endpoint
+export const api = new Hono().post(
+  '/api',
+  zValidator('json', ApiRequestSchema),
+  async (c) => {
+    const request = c.req.valid('json')
 
-  // Ship departure endpoint
-  .post(
-    '/api/ship/depart',
-    zValidator(
-      'json',
-      z.object({
-        ship_id: z.string(),
-        dest_node_id: z.string(),
-      })
-    ),
-    (c) => {
-      const { ship_id, dest_node_id } = c.req.valid('json')
+    try {
+      const response: ApiResponse = await handleApiRequest(request)
+
+      // Set appropriate HTTP status code for errors
+      if (!response.success && response.code) {
+        return c.json(response, response.code as any)
+      }
+
+      return c.json(response)
+    } catch (error) {
+      console.error('API error:', error)
+      const errorResponse: ApiResponse = {
+        success: false,
+        error: 'Internal server error',
+        code: 500,
+      }
+      return c.json(errorResponse, 500)
+    }
+  }
+)
+
+async function handleApiRequest(request: ApiRequest): Promise<ApiResponse> {
+  switch (request.action) {
+    case 'get_game_state': {
+      const currentState = gameState.getGameState()
+      return {
+        success: true,
+        data: currentState,
+      }
+    }
+
+    case 'ship_depart': {
+      const { ship_id, dest_node_id } = request
 
       // Validate ship exists and is docked
       const ship = gameState.getShip(ship_id)
       if (!ship) {
-        return c.json({ success: false, error: 'Ship not found' }, 404)
+        return {
+          success: false,
+          error: 'Ship not found',
+          code: 404,
+        }
       }
 
       if (ship.mode !== 'Docked') {
-        return c.json(
-          { success: false, error: 'Ship must be docked to depart' },
-          400
-        )
+        return {
+          success: false,
+          error: 'Ship must be docked to depart',
+          code: 400,
+        }
       }
 
       // Validate destination exists
       const destNode = gameState.getNode(dest_node_id)
       if (!destNode) {
-        return c.json(
-          { success: false, error: 'Destination node not found' },
-          404
-        )
+        return {
+          success: false,
+          error: 'Destination node not found',
+          code: 404,
+        }
       }
 
       // Execute departure
       const success = gameState.departShip(ship_id, dest_node_id)
       if (!success) {
-        return c.json({ success: false, error: 'Failed to depart ship' }, 500)
+        return {
+          success: false,
+          error: 'Failed to depart ship',
+          code: 500,
+        }
       }
 
-      return c.json({ success: true })
+      return {
+        success: true,
+        data: { message: 'Ship departed successfully' },
+      }
     }
-  )
 
-  // Buy goods endpoint
-  .post(
-    '/api/ship/buy',
-    zValidator(
-      'json',
-      z.object({
-        ship_id: z.string(),
-        units: z.number().int().positive(),
-      })
-    ),
-    (c) => {
-      const { ship_id, units } = c.req.valid('json')
+    case 'ship_buy': {
+      const { ship_id, units } = request
 
       // Validate ship exists and is docked
       const ship = gameState.getShip(ship_id)
       if (!ship) {
-        return c.json({ success: false, error: 'Ship not found' }, 404)
+        return {
+          success: false,
+          error: 'Ship not found',
+          code: 404,
+        }
       }
 
       if (ship.mode !== 'Docked') {
-        return c.json(
-          { success: false, error: 'Ship must be docked to trade' },
-          400
-        )
+        return {
+          success: false,
+          error: 'Ship must be docked to trade',
+          code: 400,
+        }
       }
 
       // Execute purchase
       const success = gameState.buyGoods(ship_id, units)
       if (!success) {
-        return c.json(
-          {
-            success: false,
-            error: 'Failed to buy goods (insufficient credits or capacity)',
-          },
-          400
-        )
+        return {
+          success: false,
+          error: 'Failed to buy goods (insufficient credits or capacity)',
+          code: 400,
+        }
       }
 
-      return c.json({ success: true })
+      return {
+        success: true,
+        data: { message: 'Goods purchased successfully' },
+      }
     }
-  )
 
-  // Sell goods endpoint
-  .post(
-    '/api/ship/sell',
-    zValidator(
-      'json',
-      z.object({
-        ship_id: z.string(),
-        units: z.number().int().positive(),
-      })
-    ),
-    (c) => {
-      const { ship_id, units } = c.req.valid('json')
+    case 'ship_sell': {
+      const { ship_id, units } = request
 
       // Validate ship exists and is docked
       const ship = gameState.getShip(ship_id)
       if (!ship) {
-        return c.json({ success: false, error: 'Ship not found' }, 404)
+        return {
+          success: false,
+          error: 'Ship not found',
+          code: 404,
+        }
       }
 
       if (ship.mode !== 'Docked') {
-        return c.json(
-          { success: false, error: 'Ship must be docked to trade' },
-          400
-        )
+        return {
+          success: false,
+          error: 'Ship must be docked to trade',
+          code: 400,
+        }
       }
 
       // Execute sale
       const success = gameState.sellGoods(ship_id, units)
       if (!success) {
-        return c.json(
-          {
-            success: false,
-            error: 'Failed to sell goods (insufficient cargo)',
-          },
-          400
-        )
+        return {
+          success: false,
+          error: 'Failed to sell goods (insufficient cargo)',
+          code: 400,
+        }
       }
 
-      return c.json({ success: true })
+      return {
+        success: true,
+        data: { message: 'Goods sold successfully' },
+      }
     }
-  )
 
-  // Debug/admin endpoints
-  .get('/api/debug/simulation/status', (c) => {
-    return c.json({
-      running: simulation.isRunning(),
-      tick_rate: simulation.getTickRate(),
-      current_time: Date.now(),
-    })
-  })
+    case 'debug_simulation_status': {
+      return {
+        success: true,
+        data: {
+          running: simulation.isRunning(),
+          tick_rate: simulation.getTickRate(),
+          current_time: Date.now(),
+        },
+      }
+    }
 
-  .post('/api/debug/simulation/start', (c) => {
-    simulation.start()
-    return c.json({ success: true, message: 'Simulation started' })
-  })
+    case 'debug_simulation_start': {
+      simulation.start()
+      return {
+        success: true,
+        data: { message: 'Simulation started' },
+      }
+    }
 
-  .post('/api/debug/simulation/stop', (c) => {
-    simulation.stop()
-    return c.json({ success: true, message: 'Simulation stopped' })
-  })
+    case 'debug_simulation_stop': {
+      simulation.stop()
+      return {
+        success: true,
+        data: { message: 'Simulation stopped' },
+      }
+    }
 
-  .post('/api/debug/simulation/tick', (c) => {
-    simulation.forceTick()
-    return c.json({ success: true, message: 'Forced simulation tick' })
-  })
+    case 'debug_simulation_tick': {
+      simulation.forceTick()
+      return {
+        success: true,
+        data: { message: 'Forced simulation tick' },
+      }
+    }
 
-// Export the app type for client consumption (as specified in v001.md)
+    default:
+      return {
+        success: false,
+        error: 'Unknown action',
+        code: 400,
+      }
+  }
+}
+
+// Export the app type for client consumption
 export type ApiType = typeof api

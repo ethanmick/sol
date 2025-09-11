@@ -10,15 +10,15 @@ importers:
 
   apps/server:
     dependencies:
-      '@game/schemas':
-        specifier: workspace:*
-        version: link:../../packages/game
       '@hono/node-server':
         specifier: ^1.19.2
         version: 1.19.2(hono@4.9.6)
       '@hono/zod-validator':
         specifier: ^0.4.1
         version: 0.4.3(hono@4.9.6)(zod@3.25.76)
+      '@space/api':
+        specifier: workspace:*
+        version: link:../../packages/api
       hono:
         specifier: ^4.9.6
         version: 4.9.6
@@ -38,6 +38,9 @@ importers:
 
   apps/www:
     dependencies:
+      '@space/api':
+        specifier: workspace:*
+        version: link:../../packages/api
       pixi-viewport:
         specifier: ^6.0.3
         version: 6.0.3(pixi.js@8.13.2)
@@ -84,6 +87,16 @@ importers:
       vite:
         specifier: ^7.1.2
         version: 7.1.5(@types/node@20.19.13)(tsx@4.20.5)
+
+  packages/api:
+    dependencies:
+      zod:
+        specifier: ^3.22.4
+        version: 3.25.76
+    devDependencies:
+      typescript:
+        specifier: ^5.0.0
+        version: 5.8.3
 
   packages/game:
     dependencies:
