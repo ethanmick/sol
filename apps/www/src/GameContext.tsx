@@ -154,7 +154,7 @@ export function GameProvider({
     }, pollInterval)
 
     return () => clearInterval(interval)
-  }, [getGameState, loading, pollInterval])
+  }, [pollInterval]) // Remove getGameState and loading from dependencies
 
   const contextValue: GameContextValue = {
     gameState,

@@ -1,11 +1,10 @@
 import { serve } from '@hono/node-server'
-import { cors } from 'hono/cors'
 import { api } from './api.js'
+import { Constants } from './game-state.js'
 import { simulation } from './simulation.js'
-import { CONSTANTS } from './game-state.js'
 
-// Configure CORS for client access
-const app = api.use('*', cors())
+// Use the API app (CORS is configured in api.ts)
+const app = api
 
 // Health check endpoint
 app.get('/', (c) => {
@@ -15,15 +14,15 @@ app.get('/', (c) => {
     status: 'running',
     simulation: {
       running: simulation.isRunning(),
-      tick_rate: CONSTANTS.TICK_RATE,
+      tick_rate: Constants.TICK_RATE,
     },
     endpoints: {
       game_state: '/api/game/state',
       ship_depart: '/api/ship/depart',
-      ship_buy: '/api/ship/buy', 
+      ship_buy: '/api/ship/buy',
       ship_sell: '/api/ship/sell',
       debug: '/api/debug/*',
-    }
+    },
   })
 })
 
@@ -43,9 +42,11 @@ serve(
     port,
   },
   (info) => {
-    console.log(`🚀 Space Trading Game Server running on http://localhost:${info.port}`)
-    console.log(`📊 Game state: /api/game/state`) 
+    console.log(
+      `🚀 Space Trading Game Server running on http://localhost:${info.port}`
+    )
+    console.log(`📊 Game state: /api/game/state`)
     console.log(`🔧 Debug: /api/debug/simulation/status`)
-    console.log(`⚡ Simulation: ${CONSTANTS.TICK_RATE} Hz tick rate`)
+    console.log(`⚡ Simulation: ${Constants.TICK_RATE} Hz tick rate`)
   }
 )

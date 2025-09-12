@@ -1,4 +1,4 @@
-import { gameState, CONSTANTS } from './game-state.js'
+import { Constants, gameState } from './game-state.js'
 
 export class SimulationEngine {
   private running = false
@@ -11,14 +11,14 @@ export class SimulationEngine {
 
   start() {
     if (this.running) return
-    
+
     this.running = true
     this.lastTickTime = Date.now()
-    
-    console.log(`Starting simulation at ${CONSTANTS.TICK_RATE} Hz`)
-    
+
+    console.log(`Starting simulation at ${Constants.TICK_RATE} Hz`)
+
     // Run tick loop at specified rate (5 Hz = 200ms intervals)
-    const tickInterval = 1000 / CONSTANTS.TICK_RATE
+    const tickInterval = 1000 / Constants.TICK_RATE
     this.intervalHandle = setInterval(() => {
       this.tick()
     }, tickInterval)
@@ -26,13 +26,13 @@ export class SimulationEngine {
 
   stop() {
     if (!this.running) return
-    
+
     this.running = false
     if (this.intervalHandle) {
       clearInterval(this.intervalHandle)
       this.intervalHandle = null
     }
-    
+
     console.log('Simulation stopped')
   }
 
@@ -43,25 +43,25 @@ export class SimulationEngine {
 
     try {
       // Tick Pipeline as specified in v001.md:
-      
-      // 1. Advance Time - already done with 'now'
-      
+
+      // 1. Advance Time - advance simulation time
+      gameState.advanceTime(deltaTime)
+
       // 2. Update Nodes - positions computed in gameState.getGameState()
       //    Price updates handled separately
-      gameState.updatePrices(now)
-      
+      gameState.updatePrices()
+
       // 3. Integrate Ships - update positions based on movement
       gameState.updateShips(deltaTime)
-      
+
       // 4. Arrival Checks - handled in updateShips()
-      
+
       // 5. Encounter Phase - NOT IMPLEMENTED (marked as "NOT DOING FOR NOW" in v001.md)
-      
+
       // 6. Event Dispatch - state changes are immediately available via getGameState()
-      
+
       // 7. Housekeeping - could add connection cleanup, caching limits here
       this.housekeeping()
-      
     } catch (error) {
       console.error('Error in simulation tick:', error)
     }
@@ -70,7 +70,7 @@ export class SimulationEngine {
   private housekeeping() {
     // Placeholder for future housekeeping tasks:
     // - Cull idle connections
-    // - Clean bounded caches  
+    // - Clean bounded caches
     // - Log statistics
     // - Memory cleanup
   }
@@ -81,7 +81,7 @@ export class SimulationEngine {
 
   // Get current tick rate
   getTickRate(): number {
-    return CONSTANTS.TICK_RATE
+    return Constants.TICK_RATE
   }
 
   // Force a single tick (useful for testing)

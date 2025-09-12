@@ -1,11 +1,22 @@
 import { zValidator } from '@hono/zod-validator'
 import { ApiRequestSchema, type ApiRequest, type ApiResponse } from '@space/api'
 import { Hono } from 'hono'
+import { cors } from 'hono/cors'
 import { gameState } from './game-state.js'
 import { simulation } from './simulation.js'
 
-// Create Hono app with single JSON API endpoint
-export const api = new Hono().post(
+// Create Hono app with CORS middleware applied first
+export const api = new Hono()
+
+// Apply CORS middleware to all routes
+api.use('*', cors({
+  origin: '*',
+  allowMethods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowHeaders: ['Content-Type', 'Authorization']
+}))
+
+// Add single JSON API endpoint
+api.post(
   '/api',
   zValidator('json', ApiRequestSchema),
   async (c) => {

@@ -1,12 +1,10 @@
 import type { Corporation, GameState, Node, Player, Ship } from '@space/api'
 
-// Global constants from v001.md
-export const CONSTANTS = {
+export const Constants = {
   MAX_CAPACITY: 20,
   SHIP_SPEED: 500, // units/sec
   DOCK_RADIUS: 2000, // units
-  TICK_RATE: 5, // Hz
-  PRICE_TICK_INTERVAL: 30, // seconds
+  TICK_RATE: 1, // Hz
   SYSTEM_TIME_ORIGIN: Date.now(), // epoch for orbits
 }
 
@@ -20,6 +18,10 @@ export class GameStateManager {
     Omit<Node, 'pos'> & { pos?: { x: number; y: number } }
   >()
 
+  // Simulation time tracking
+  private simulationTime = 0 // Time in seconds since simulation started
+  private lastRealTime = Date.now()
+
   // Ephemeral state (not persisted)
   private destAssignments = new Map<string, string>() // ship_id -> dest_node_id
   private lastPriceUpdate = 0
@@ -28,8 +30,11 @@ export class GameStateManager {
     this.initializeTestData()
   }
 
-  // Initialize test data as specified in v001.md
+  // Initialize solar system data
   private initializeTestData() {
+    // Scale factor: SolarSystemMap uses 300px per AU, server uses larger units
+    const AU_TO_UNITS = 15000 // Scale factor for server coordinates
+
     // Create test player
     const player: Player = {
       id: 'player-1',
@@ -45,18 +50,18 @@ export class GameStateManager {
     }
     this.corporations.set(corp.id, corp)
 
-    // Create test ship (starts docked at first node)
+    // Create test ship (starts docked at Earth)
     const ship: Ship = {
       id: 'ship-1',
       player_id: player.id,
       corp_id: corp.id,
       mode: 'Docked',
-      pos: { x: 0, y: 0 }, // Will be updated to node position
+      pos: { x: 0, y: 0 }, // Will be updated to Earth position
       cargo_units: 0,
     }
     this.ships.set(ship.id, ship)
 
-    // Create 5 starter nodes (2 orbital, 1 stationary hub, 2 more orbital)
+    // Solar system nodes
     const nodes: Array<
       Omit<Node, 'pos'> & {
         orbit?: {
@@ -68,52 +73,137 @@ export class GameStateManager {
         }
       }
     > = [
+      // Sun (stationary at center)
       {
-        id: 'node-hub',
-        name: 'Central Hub',
-        price: 100,
-        // Stationary hub (no orbit)
+        id: 'sun',
+        name: 'Sun',
+        price: 150, // High energy prices
       },
+      // Mercury
       {
-        id: 'node-planet-1',
-        name: 'Verdant Prime',
-        price: 80,
-        orbit: { centerX: 0, centerY: 0, radius: 5000, omega: 0.1, phase: 0 },
-      },
-      {
-        id: 'node-planet-2',
-        name: 'Crimson Station',
-        price: 120,
+        id: 'mercury',
+        name: 'Mercury',
+        price: 180, // Expensive due to harsh conditions
         orbit: {
           centerX: 0,
           centerY: 0,
-          radius: 8000,
-          omega: 0.08,
+          radius: 0.39 * AU_TO_UNITS,
+          omega: 0.2, // Fast orbit
+          phase: 0,
+        },
+      },
+      // Venus
+      {
+        id: 'venus',
+        name: 'Venus',
+        price: 160, // Atmospheric processing stations
+        orbit: {
+          centerX: 0,
+          centerY: 0,
+          radius: 0.72 * AU_TO_UNITS,
+          omega: 0.15,
+          phase: Math.PI / 3,
+        },
+      },
+      // Earth
+      {
+        id: 'earth',
+        name: 'Earth',
+        price: 100, // Standard baseline pricing
+        orbit: {
+          centerX: 0,
+          centerY: 0,
+          radius: 1.0 * AU_TO_UNITS,
+          omega: 0.1,
           phase: Math.PI,
         },
       },
+      // Mars
       {
-        id: 'node-planet-3',
-        name: 'Azure Colony',
-        price: 90,
+        id: 'mars',
+        name: 'Mars',
+        price: 120, // Colonial supplies
         orbit: {
           centerX: 0,
           centerY: 0,
-          radius: 12000,
-          omega: 0.06,
+          radius: 1.52 * AU_TO_UNITS,
+          omega: 0.08,
           phase: Math.PI / 2,
         },
       },
+      // Earth's Moon
       {
-        id: 'node-planet-4',
-        name: 'Golden Outpost',
+        id: 'luna',
+        name: 'Luna',
+        price: 90, // Mining operations
+        orbit: {
+          centerX: 1.0 * AU_TO_UNITS, // Orbits around Earth's position
+          centerY: 0,
+          radius: 2000, // Much smaller orbit around Earth
+          omega: 2.0, // Fast lunar orbit
+          phase: 0,
+        },
+      },
+      // Mars moons
+      {
+        id: 'phobos',
+        name: 'Phobos',
         price: 110,
         orbit: {
-          centerX: 0,
+          centerX: 1.52 * AU_TO_UNITS, // Orbits around Mars
           centerY: 0,
-          radius: 15000,
-          omega: 0.05,
-          phase: (3 * Math.PI) / 2,
+          radius: 800,
+          omega: 5.0, // Very fast orbit
+          phase: 0,
+        },
+      },
+      {
+        id: 'deimos',
+        name: 'Deimos',
+        price: 105,
+        orbit: {
+          centerX: 1.52 * AU_TO_UNITS, // Orbits around Mars
+          centerY: 0,
+          radius: 1200,
+          omega: 3.0, // Slower than Phobos
+          phase: Math.PI,
+        },
+      },
+      // Earth space stations
+      {
+        id: 'earth-station-1',
+        name: 'Terra Station Alpha',
+        price: 95,
+        orbit: {
+          centerX: 1.0 * AU_TO_UNITS,
+          centerY: 0,
+          radius: 3000, // Slightly farther than Luna
+          omega: 1.5,
+          phase: 0,
+        },
+      },
+      {
+        id: 'earth-station-2',
+        name: 'Terra Station Beta',
+        price: 98,
+        orbit: {
+          centerX: 1.0 * AU_TO_UNITS,
+          centerY: 0,
+          radius: 3500,
+          omega: 1.2,
+          phase: (2 * Math.PI) / 3,
+        },
+      },
+      {
+        id: 'earth-station-3',
+        name: 'Terra Station Gamma',
+        price: 92,
+        orbit: {
+          centerX: 1.0 * AU_TO_UNITS,
+          centerY: 0,
+          radius: 4000,
+          omega: 1.0,
+          phase: (4 * Math.PI) / 3,
         },
       },
     ]
@@ -124,16 +214,21 @@ export class GameStateManager {
     })
   }
 
+  // Advance simulation time (called by simulation engine each tick)
+  advanceTime(deltaTimeSeconds: number) {
+    this.simulationTime += deltaTimeSeconds
+  }
+
   // Get current game state snapshot
   getGameState(): GameState {
     const now = Date.now()
 
-    // Update node positions based on current time
-    this.updateNodePositions(now)
+    // Update node positions based on simulation time
+    this.updateNodePositions(this.simulationTime)
 
     return {
       server_time: now,
-      tick_rate: CONSTANTS.TICK_RATE,
+      tick_rate: Constants.TICK_RATE,
       players: Array.from(this.players.values()),
       corporations: Array.from(this.corporations.values()),
       ships: Array.from(this.ships.values()),
@@ -145,53 +240,131 @@ export class GameStateManager {
   }
 
   // Update node positions based on orbital mechanics
-  private updateNodePositions(currentTime: number) {
-    const t = (currentTime - CONSTANTS.SYSTEM_TIME_ORIGIN) / 1000 // Convert to seconds
+  private updateNodePositions(simulationTime: number) {
+    const t = simulationTime // Use simulation time directly (already in seconds)
+    const AU_TO_UNITS = 15000 // Same scale factor as initialization
 
     const orbitalConfigs = [
-      { nodeId: 'node-hub', orbit: null }, // Stationary
+      { nodeId: 'sun', orbit: null }, // Stationary
       {
-        nodeId: 'node-planet-1',
-        orbit: { centerX: 0, centerY: 0, radius: 5000, omega: 0.1, phase: 0 },
-      },
-      {
-        nodeId: 'node-planet-2',
+        nodeId: 'mercury',
         orbit: {
           centerX: 0,
           centerY: 0,
-          radius: 8000,
-          omega: 0.08,
+          radius: 0.39 * AU_TO_UNITS,
+          omega: 0.2,
+          phase: 0,
+        },
+      },
+      {
+        nodeId: 'venus',
+        orbit: {
+          centerX: 0,
+          centerY: 0,
+          radius: 0.72 * AU_TO_UNITS,
+          omega: 0.15,
+          phase: Math.PI / 3,
+        },
+      },
+      {
+        nodeId: 'earth',
+        orbit: {
+          centerX: 0,
+          centerY: 0,
+          radius: 1.0 * AU_TO_UNITS,
+          omega: 0.1,
           phase: Math.PI,
         },
       },
       {
-        nodeId: 'node-planet-3',
+        nodeId: 'mars',
         orbit: {
           centerX: 0,
           centerY: 0,
-          radius: 12000,
-          omega: 0.06,
+          radius: 1.52 * AU_TO_UNITS,
+          omega: 0.08,
           phase: Math.PI / 2,
         },
       },
       {
-        nodeId: 'node-planet-4',
+        nodeId: 'luna',
         orbit: {
-          centerX: 0,
+          centerX: 1.0 * AU_TO_UNITS,
           centerY: 0,
-          radius: 15000,
-          omega: 0.05,
-          phase: (3 * Math.PI) / 2,
+          radius: 2000,
+          omega: 2.0,
+          phase: 0,
+        },
+      },
+      {
+        nodeId: 'phobos',
+        orbit: {
+          centerX: 1.52 * AU_TO_UNITS,
+          centerY: 0,
+          radius: 800,
+          omega: 5.0,
+          phase: 0,
+        },
+      },
+      {
+        nodeId: 'deimos',
+        orbit: {
+          centerX: 1.52 * AU_TO_UNITS,
+          centerY: 0,
+          radius: 1200,
+          omega: 3.0,
+          phase: Math.PI,
+        },
+      },
+      {
+        nodeId: 'earth-station-1',
+        orbit: {
+          centerX: 1.0 * AU_TO_UNITS,
+          centerY: 0,
+          radius: 3000,
+          omega: 1.5,
+          phase: 0,
+        },
+      },
+      {
+        nodeId: 'earth-station-2',
+        orbit: {
+          centerX: 1.0 * AU_TO_UNITS,
+          centerY: 0,
+          radius: 3500,
+          omega: 1.2,
+          phase: (2 * Math.PI) / 3,
+        },
+      },
+      {
+        nodeId: 'earth-station-3',
+        orbit: {
+          centerX: 1.0 * AU_TO_UNITS,
+          centerY: 0,
+          radius: 4000,
+          omega: 1.0,
+          phase: (4 * Math.PI) / 3,
         },
       },
     ]
 
+    // First pass: update planets and stationary objects
     orbitalConfigs.forEach(({ nodeId, orbit }) => {
       const node = this.nodes.get(nodeId)
       if (!node) return
 
+      // Skip moon/station objects in first pass
+      if (
+        nodeId.includes('luna') ||
+        nodeId.includes('phobos') ||
+        nodeId.includes('deimos') ||
+        nodeId.includes('station')
+      ) {
+        return
+      }
+
       if (!orbit) {
-        // Stationary hub
+        // Stationary sun
         node.pos = { x: 0, y: 0 }
       } else {
         // Orbital mechanics: pos(t) = center + R * [cos(ωt+φ), sin(ωt+φ)]
@@ -202,6 +375,71 @@ export class GameStateManager {
         }
       }
     })
+
+    // Second pass: update moons and stations that orbit around planets
+    const earthNode = this.nodes.get('earth')
+    const marsNode = this.nodes.get('mars')
+
+    if (earthNode?.pos) {
+      // Luna orbits Earth
+      const lunaNode = this.nodes.get('luna')
+      if (lunaNode) {
+        const angle = 2.0 * t + 0
+        lunaNode.pos = {
+          x: earthNode.pos.x + 2000 * Math.cos(angle),
+          y: earthNode.pos.y + 2000 * Math.sin(angle),
+        }
+      }
+
+      // Earth stations orbit Earth
+      const station1 = this.nodes.get('earth-station-1')
+      if (station1) {
+        const angle = 1.5 * t + 0
+        station1.pos = {
+          x: earthNode.pos.x + 3000 * Math.cos(angle),
+          y: earthNode.pos.y + 3000 * Math.sin(angle),
+        }
+      }
+
+      const station2 = this.nodes.get('earth-station-2')
+      if (station2) {
+        const angle = 1.2 * t + (2 * Math.PI) / 3
+        station2.pos = {
+          x: earthNode.pos.x + 3500 * Math.cos(angle),
+          y: earthNode.pos.y + 3500 * Math.sin(angle),
+        }
+      }
+
+      const station3 = this.nodes.get('earth-station-3')
+      if (station3) {
+        const angle = 1.0 * t + (4 * Math.PI) / 3
+        station3.pos = {
+          x: earthNode.pos.x + 4000 * Math.cos(angle),
+          y: earthNode.pos.y + 4000 * Math.sin(angle),
+        }
+      }
+    }
+
+    if (marsNode?.pos) {
+      // Mars moons orbit Mars
+      const phobosNode = this.nodes.get('phobos')
+      if (phobosNode) {
+        const angle = 5.0 * t + 0
+        phobosNode.pos = {
+          x: marsNode.pos.x + 800 * Math.cos(angle),
+          y: marsNode.pos.y + 800 * Math.sin(angle),
+        }
+      }
+
+      const deimosNode = this.nodes.get('deimos')
+      if (deimosNode) {
+        const angle = 3.0 * t + Math.PI
+        deimosNode.pos = {
+          x: marsNode.pos.x + 1200 * Math.cos(angle),
+          y: marsNode.pos.y + 1200 * Math.sin(angle),
+        }
+      }
+    }
   }
 
   // Update ship positions and handle movement
@@ -228,7 +466,7 @@ export class GameStateManager {
 
             // Check if ship has arrived
             const distance = this.calculateDistance(ship.pos, destNode.pos)
-            if (distance <= CONSTANTS.DOCK_RADIUS) {
+            if (distance <= Constants.DOCK_RADIUS) {
               ship.mode = 'Docked'
               ship.pos = { ...destNode.pos }
               this.destAssignments.delete(ship.id)
@@ -253,7 +491,7 @@ export class GameStateManager {
     if (distance > 0) {
       const normalizedX = dx / distance
       const normalizedY = dy / distance
-      const moveDistance = CONSTANTS.SHIP_SPEED * deltaTime
+      const moveDistance = Constants.SHIP_SPEED * deltaTime
 
       ship.pos.x += normalizedX * moveDistance
       ship.pos.y += normalizedY * moveDistance
@@ -271,15 +509,12 @@ export class GameStateManager {
   }
 
   // Update commodity prices with bounded random walk
-  updatePrices(currentTime: number) {
-    if (
-      currentTime - this.lastPriceUpdate <
-      CONSTANTS.PRICE_TICK_INTERVAL * 1000
-    ) {
+  updatePrices() {
+    if (true) {
       return // Not time for price update yet
     }
 
-    this.lastPriceUpdate = currentTime
+    this.lastPriceUpdate = this.simulationTime
 
     for (const node of this.nodes.values()) {
       // Bounded random walk: ±10% change, with bounds [50, 200]
@@ -317,7 +552,7 @@ export class GameStateManager {
     if (!node || !corp) return false
 
     // Check capacity and credits
-    if (ship.cargo_units + units > CONSTANTS.MAX_CAPACITY) return false
+    if (ship.cargo_units + units > Constants.MAX_CAPACITY) return false
 
     const totalCost = units * node.price
     if (corp.credits < totalCost) return false
