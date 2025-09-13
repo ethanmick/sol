@@ -1,23 +1,13 @@
 export {
-  // Entity schemas
-  CorporationSchema,
-  GameStateSchema,
-  NodeSchema,
-  PlayerSchema,
-  ShipSchema,
-  
   // API schemas
   ApiRequestSchema,
   ApiResponseSchema,
-  
-  // Entity types
-  type Corporation,
-  type GameState,
-  type Node,
-  type Player,
-  type Ship,
-  
+  GameObjectSchema,
+  WorldStateSchema,
   // API types
   type ApiRequest,
   type ApiResponse,
+  // Entity types
+  type GameObject,
+  type WorldState,
 } from './schemas.js'

@@ -2,11 +2,10 @@ import { zValidator } from '@hono/zod-validator'
 import { ApiRequestSchema, type ApiRequest, type ApiResponse } from '@space/api'
 import { Hono } from 'hono'
 import { cors } from 'hono/cors'
-import { gameState } from './game-state.js'
+
 import { Simulation } from './game/simulation.js'
 import { WorldState } from './game/world-state.js'
 import { setup } from './v001/sol.js'
-// import { simulation } from './simulation.js'
 
 const state = setup(new WorldState())
 const simulation = new Simulation(state)
@@ -27,9 +26,7 @@ api.post('/api', zValidator('json', ApiRequestSchema), async (c) => {
   const request = c.req.valid('json')
 
   try {
-    const response: ApiResponse = await handleApiRequest(request)
-
-    // Set appropriate HTTP status code for errors
+    const response: ApiResponse = await handle(request)
     if (!response.success && response.code) {
       return c.json(response, response.code as any)
     }
@@ -46,169 +43,13 @@ api.post('/api', zValidator('json', ApiRequestSchema), async (c) => {
   }
 })
 
-async function handleApiRequest(request: ApiRequest): Promise<ApiResponse> {
+async function handle(request: ApiRequest): Promise<ApiResponse> {
+  console.log('handling request', request.action)
   switch (request.action) {
     case 'get_game_state': {
-      const currentState = gameState.getGameState()
       return {
         success: true,
-        data: currentState,
-      }
-    }
-
-    case 'ship_depart': {
-      const { ship_id, dest_node_id } = request
-
-      // Validate ship exists and is docked
-      const ship = gameState.getShip(ship_id)
-      if (!ship) {
-        return {
-          success: false,
-          error: 'Ship not found',
-          code: 404,
-        }
-      }
-
-      if (ship.mode !== 'Docked') {
-        return {
-          success: false,
-          error: 'Ship must be docked to depart',
-          code: 400,
-        }
-      }
-
-      // Validate destination exists
-      const destNode = gameState.getNode(dest_node_id)
-      if (!destNode) {
-        return {
-          success: false,
-          error: 'Destination node not found',
-          code: 404,
-        }
-      }
-
-      // Execute departure
-      const success = gameState.departShip(ship_id, dest_node_id)
-      if (!success) {
-        return {
-          success: false,
-          error: 'Failed to depart ship',
-          code: 500,
-        }
-      }
-
-      return {
-        success: true,
-        data: { message: 'Ship departed successfully' },
-      }
-    }
-
-    case 'ship_buy': {
-      const { ship_id, units } = request
-
-      // Validate ship exists and is docked
-      const ship = gameState.getShip(ship_id)
-      if (!ship) {
-        return {
-          success: false,
-          error: 'Ship not found',
-          code: 404,
-        }
-      }
-
-      if (ship.mode !== 'Docked') {
-        return {
-          success: false,
-          error: 'Ship must be docked to trade',
-          code: 400,
-        }
-      }
-
-      // Execute purchase
-      const success = gameState.buyGoods(ship_id, units)
-      if (!success) {
-        return {
-          success: false,
-          error: 'Failed to buy goods (insufficient credits or capacity)',
-          code: 400,
-        }
-      }
-
-      return {
-        success: true,
-        data: { message: 'Goods purchased successfully' },
-      }
-    }
-
-    case 'ship_sell': {
-      const { ship_id, units } = request
-
-      // Validate ship exists and is docked
-      const ship = gameState.getShip(ship_id)
-      if (!ship) {
-        return {
-          success: false,
-          error: 'Ship not found',
-          code: 404,
-        }
-      }
-
-      if (ship.mode !== 'Docked') {
-        return {
-          success: false,
-          error: 'Ship must be docked to trade',
-          code: 400,
-        }
-      }
-
-      // Execute sale
-      const success = gameState.sellGoods(ship_id, units)
-      if (!success) {
-        return {
-          success: false,
-          error: 'Failed to sell goods (insufficient cargo)',
-          code: 400,
-        }
-      }
-
-      return {
-        success: true,
-        data: { message: 'Goods sold successfully' },
-      }
-    }
-
-    case 'debug_simulation_status': {
-      return {
-        success: true,
-        data: {
-          running: simulation.isRunning(),
-          tick_rate: simulation.getTickRate(),
-          current_time: Date.now(),
-        },
-      }
-    }
-
-    case 'debug_simulation_start': {
-      simulation.start()
-      return {
-        success: true,
-        data: { message: 'Simulation started' },
-      }
-    }
-
-    case 'debug_simulation_stop': {
-      simulation.stop()
-      return {
-        success: true,
-        data: { message: 'Simulation stopped' },
-      }
-    }
-
-    case 'debug_simulation_tick': {
-      simulation.forceTick()
-      return {
-        success: true,
-        data: { message: 'Forced simulation tick' },
+        data: state,
       }
     }
 

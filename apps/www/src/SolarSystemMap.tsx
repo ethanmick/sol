@@ -1,7 +1,7 @@
 import { Viewport } from 'pixi-viewport'
 import { Application, Container, Graphics, Text } from 'pixi.js'
 import React, { useEffect, useRef, useState } from 'react'
-import { useNodes, useShips } from './GameContext'
+import { useGameState } from './GameContext'
 
 // Constants
 const AU_TO_PX = 300 // 1 AU = 300 pixels
@@ -72,10 +72,7 @@ const SolarSystemMap: React.FC = () => {
   const [selectedBody, setSelectedBody] = useState<CelestialBody | null>(null)
   const [mousePos, setMousePos] = useState({ x: 0, y: 0 })
 
-  // Get live data from server
-  const nodes = useNodes()
-  const ships = useShips()
-
+  const state = useGameState()
 
   // Containers for different layers
   const layersRef = useRef<{
@@ -204,7 +201,6 @@ const SolarSystemMap: React.FC = () => {
       const updateVisuals = () => {
         const SERVER_AU_TO_UNITS = 15000
         const SCALE_FACTOR = AU_TO_PX / SERVER_AU_TO_UNITS
-
 
         nodes.forEach((node) => {
           if (!node.pos) return
