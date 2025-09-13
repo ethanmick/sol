@@ -5,13 +5,11 @@ import { useGameState } from './GameContext'
 const SolarSystemMap: React.FC = () => {
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const appRef = useRef<Application | null>(null)
-
   const { gameState } = useGameState()
 
   useEffect(() => {
     if (!canvasRef.current) return
-
-    const initPIXI = async () => {
+    ;(async function () {
       const app = new Application()
       await app.init({
         canvas: canvasRef.current!,
@@ -20,9 +18,7 @@ const SolarSystemMap: React.FC = () => {
         background: 0x000000,
       })
       appRef.current = app
-    }
-
-    initPIXI()
+    })()
 
     return () => {
       if (appRef.current) {
@@ -31,7 +27,6 @@ const SolarSystemMap: React.FC = () => {
     }
   }, [])
 
-  // Render entities when game state changes
   useEffect(() => {
     if (!appRef.current || !gameState?.entities) return
 
@@ -50,7 +45,7 @@ const SolarSystemMap: React.FC = () => {
       )
 
       const label = new Text({
-        text: 'node',
+        text: entity.name || '',
         style: {
           fontSize: 16,
           fill: 0xffffff,

@@ -1,3 +1,4 @@
+import './App.css'
 import { GameProvider } from './GameContext'
 import SolarSystemMap from './SolarSystemMap'
 
