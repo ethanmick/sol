@@ -3,45 +3,48 @@ import { ApiRequestSchema, type ApiRequest, type ApiResponse } from '@space/api'
 import { Hono } from 'hono'
 import { cors } from 'hono/cors'
 import { gameState } from './game-state.js'
-import { simulation } from './simulation.js'
+import { Simulation } from './game/simulation.js'
+import { WorldState } from './game/world-state.js'
+import { setup } from './v001/sol.js'
+// import { simulation } from './simulation.js'
 
-// Create Hono app with CORS middleware applied first
+const state = setup(new WorldState())
+const simulation = new Simulation(state)
+simulation.start()
+
 export const api = new Hono()
 
-// Apply CORS middleware to all routes
-api.use('*', cors({
-  origin: '*',
-  allowMethods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-  allowHeaders: ['Content-Type', 'Authorization']
-}))
-
-// Add single JSON API endpoint
-api.post(
-  '/api',
-  zValidator('json', ApiRequestSchema),
-  async (c) => {
-    const request = c.req.valid('json')
-
-    try {
-      const response: ApiResponse = await handleApiRequest(request)
-
-      // Set appropriate HTTP status code for errors
-      if (!response.success && response.code) {
-        return c.json(response, response.code as any)
-      }
-
-      return c.json(response)
-    } catch (error) {
-      console.error('API error:', error)
-      const errorResponse: ApiResponse = {
-        success: false,
-        error: 'Internal server error',
-        code: 500,
-      }
-      return c.json(errorResponse, 500)
-    }
-  }
+api.use(
+  '*',
+  cors({
+    origin: '*',
+    allowMethods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+    allowHeaders: ['Content-Type', 'Authorization'],
+  })
 )
+
+api.post('/api', zValidator('json', ApiRequestSchema), async (c) => {
+  const request = c.req.valid('json')
+
+  try {
+    const response: ApiResponse = await handleApiRequest(request)
+
+    // Set appropriate HTTP status code for errors
+    if (!response.success && response.code) {
+      return c.json(response, response.code as any)
+    }
+
+    return c.json(response)
+  } catch (error) {
+    console.error('API error:', error)
+    const errorResponse: ApiResponse = {
+      success: false,
+      error: 'Internal server error',
+      code: 500,
+    }
+    return c.json(errorResponse, 500)
+  }
+})
 
 async function handleApiRequest(request: ApiRequest): Promise<ApiResponse> {
   switch (request.action) {
