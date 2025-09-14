@@ -9,6 +9,7 @@
   },
   "dependencies": {
     "@space/api": "workspace:*",
+    "@space/game": "workspace:*",
     "@hono/node-server": "^1.19.2",
     "@hono/zod-validator": "^0.4.1",
     "hono": "^4.9.6",

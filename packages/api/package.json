@@ -16,7 +16,8 @@
     "dev": "tsc --watch"
   },
   "dependencies": {
-    "zod": "^3.22.4"
+    "zod": "3.22.4",
+    "@space/game": "workspace:*"
   },
   "devDependencies": {
     "typescript": "^5.0.0"

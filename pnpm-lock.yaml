@@ -19,6 +19,9 @@ importers:
       '@space/api':
         specifier: workspace:*
         version: link:../../packages/api
+      '@space/game':
+        specifier: workspace:*
+        version: link:../../packages/game
       hono:
         specifier: ^4.9.6
         version: 4.9.6
@@ -41,6 +44,9 @@ importers:
       '@space/api':
         specifier: workspace:*
         version: link:../../packages/api
+      '@space/game':
+        specifier: workspace:*
+        version: link:../../packages/game
       pixi-viewport:
         specifier: ^6.0.3
         version: 6.0.3(pixi.js@8.13.2)
@@ -90,9 +96,12 @@ importers:
 
   packages/api:
     dependencies:
+      '@space/game':
+        specifier: workspace:*
+        version: link:../game
       zod:
-        specifier: ^3.22.4
-        version: 3.25.76
+        specifier: 3.22.4
+        version: 3.22.4
     devDependencies:
       typescript:
         specifier: ^5.0.0
@@ -101,8 +110,8 @@ importers:
   packages/game:
     dependencies:
       zod:
-        specifier: ^3.22.4
-        version: 3.25.76
+        specifier: 3.22.4
+        version: 3.22.4
     devDependencies:
       typescript:
         specifier: ^5.0.0
@@ -1244,6 +1253,9 @@ packages:
     resolution: {integrity: sha512-rVksvsnNCdJ/ohGc6xgPwyN8eheCxsiLM8mxuE/t/mOVqJewPuO1miLpTHQiRgTKCLexL4MeAFVagts7HmNZ2Q==}
     engines: {node: '>=10'}
 
+  zod@3.22.4:
+    resolution: {integrity: sha512-iC+8Io04lddc+mVqQ9AZ7OQ2MrUKGN+oIQyq1vemgt46jwCwLfhq7/pwnBnNXXXZb8VTVLKwp9EDkx+ryxIWmg==}
+
   zod@3.25.76:
     resolution: {integrity: sha512-gzUt/qt81nXsFGKIFcC3YnfEAx5NkunCfnDlvuBSSFS02bcXu4Lmea0AFIUwbLWxWPx3d9p8S5QoaujKcNQxcQ==}
 
@@ -2297,5 +2309,7 @@ snapshots:
   yallist@3.1.1: {}
 
   yocto-queue@0.1.0: {}
+
+  zod@3.22.4: {}
 
   zod@3.25.76: {}

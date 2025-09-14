@@ -1,11 +1,8 @@
+import type { GameObject as GameObjectData } from '@space/game'
 import type { Position } from '../util/position.js'
 
-export abstract class GameObject {
-  public position: Position
-
-  constructor(position: Position) {
-    this.position = position
-  }
+export abstract class GameObject implements GameObjectData {
+  constructor(public position: Position, public name: string) {}
 
   abstract update(delta: number): void
 }

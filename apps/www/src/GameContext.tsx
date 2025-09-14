@@ -1,5 +1,5 @@
 /* eslint-disable react-refresh/only-export-components */
-import type { WorldState } from '@space/api'
+import type { WorldState } from '@space/game'
 import {
   createContext,
   type ReactNode,

@@ -22,7 +22,7 @@ api.use(
   })
 )
 
-api.post('/api', zValidator('json', ApiRequestSchema), async (c) => {
+api.post('/api', zValidator('json', ApiRequestSchema as any), async (c) => {
   const request = c.req.valid('json')
 
   try {

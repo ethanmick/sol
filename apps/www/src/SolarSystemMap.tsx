@@ -45,7 +45,7 @@ const SolarSystemMap: React.FC = () => {
       )
 
       const label = new Text({
-        text: entity.name || '',
+        text: entity.name,
         style: {
           fontSize: 16,
           fill: 0xffffff,

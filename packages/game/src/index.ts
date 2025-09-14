@@ -1,12 +1,3 @@
-export {
-  CorporationSchema,
-  GameStateSchema,
-  NodeSchema,
-  PlayerSchema,
-  ShipSchema,
-  type Corporation,
-  type GameState,
-  type Node,
-  type Player,
-  type Ship,
-} from './schemas.js'
+export { GameObjectSchema, type GameObject } from './game/game-object.js'
+export { StarSchema, type Star } from './game/star.js'
+export { WorldStateSchema, type WorldState } from './world-state.js'

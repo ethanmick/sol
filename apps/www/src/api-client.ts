@@ -1,4 +1,5 @@
-import type { ApiRequest, ApiResponse, GameState } from '@space/api'
+import type { ApiRequest, ApiResponse } from '@space/api'
+import type { WorldState } from '@space/game'
 
 export class ApiClient {
   private baseUrl: string
@@ -23,7 +24,7 @@ export class ApiClient {
     return response.json() as Promise<ApiResponse>
   }
 
-  async getGameState(): Promise<GameState> {
+  async getGameState(): Promise<WorldState> {
     const response = await this.makeRequest({
       action: 'get_game_state',
     })
@@ -32,9 +33,8 @@ export class ApiClient {
       throw new Error(response.error)
     }
 
-    return response.data as GameState
+    return response.data as WorldState
   }
-
 }
 
 // Create a default client instance
