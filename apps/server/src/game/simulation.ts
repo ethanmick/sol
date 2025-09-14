@@ -13,11 +13,11 @@ export class Simulation {
       const now = Date.now()
       const delta = now - this.lastTickTimeMS
       this.lastTickTimeMS = now
-      this.tick(delta)
+      this.update(delta)
     }, 100)
   }
 
-  private tick(delta: number) {
+  private update(delta: number) {
     this.state.update(delta)
   }
 }

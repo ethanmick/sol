@@ -1,6 +1,35 @@
+import type { Star } from '@space/game'
 import { Application, Graphics, Text } from 'pixi.js'
 import React, { useEffect, useRef } from 'react'
 import { useGameState } from './GameContext'
+
+// Render method for star entities
+const renderStar = (
+  entity: Star,
+  centerX: number,
+  centerY: number
+): Graphics => {
+  const nodeGraphics = new Graphics()
+  nodeGraphics.circle(0, 0, 25)
+  nodeGraphics.fill(0xffd700)
+  nodeGraphics.position.set(
+    centerX + entity.position.x,
+    centerY + entity.position.y
+  )
+
+  const label = new Text({
+    text: entity.name,
+    style: {
+      fontSize: 16,
+      fill: 0xffffff,
+    },
+  })
+  label.anchor.set(0.5)
+  label.position.set(0, -40)
+  nodeGraphics.addChild(label)
+
+  return nodeGraphics
+}
 
 const SolarSystemMap: React.FC = () => {
   const canvasRef = useRef<HTMLCanvasElement>(null)
@@ -33,30 +62,17 @@ const SolarSystemMap: React.FC = () => {
     // Clear existing graphics
     appRef.current.stage.removeChildren()
 
-    // Render first entity (the sun)
-    const entity = gameState.entities[0]
-    if (entity) {
-      const nodeGraphics = new Graphics()
-      nodeGraphics.circle(0, 0, 25)
-      nodeGraphics.fill(0xffd700)
-      nodeGraphics.position.set(
-        window.innerWidth / 2 + entity.position.x,
-        window.innerHeight / 2 + entity.position.y
-      )
-
-      const label = new Text({
-        text: entity.name,
-        style: {
-          fontSize: 16,
-          fill: 0xffffff,
-        },
-      })
-      label.anchor.set(0.5)
-      label.position.set(0, -40)
-      nodeGraphics.addChild(label)
-
-      appRef.current.stage.addChild(nodeGraphics)
-    }
+    // Render entities using appropriate render methods
+    gameState.entities.forEach((entity) => {
+      if (entity.type === 'star') {
+        const starGraphics = renderStar(
+          entity as Star,
+          window.innerWidth / 2,
+          window.innerHeight / 2
+        )
+        appRef.current!.stage.addChild(starGraphics)
+      }
+    })
   }, [gameState])
 
   return (
