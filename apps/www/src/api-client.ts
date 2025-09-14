@@ -37,5 +37,4 @@ export class ApiClient {
   }
 }
 
-// Create a default client instance
 export const apiClient = new ApiClient()

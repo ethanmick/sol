@@ -90,7 +90,6 @@ const SolarSystemMap: React.FC = () => {
     // Clear existing graphics
     appRef.current.stage.removeChildren()
 
-    // Render entities using appropriate render methods
     gameState.entities.forEach((entity) => {
       if (entity.type === 'star') {
         const starGraphics = renderStar(
