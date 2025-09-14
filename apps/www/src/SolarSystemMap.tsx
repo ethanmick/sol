@@ -1,4 +1,4 @@
-import type { Star } from '@space/game'
+import type { Planet, Star } from '@space/game'
 import { Application, Graphics, Text } from 'pixi.js'
 import React, { useEffect, useRef } from 'react'
 import { useGameState } from './GameContext'
@@ -26,6 +26,34 @@ const renderStar = (
   })
   label.anchor.set(0.5)
   label.position.set(0, -40)
+  nodeGraphics.addChild(label)
+
+  return nodeGraphics
+}
+
+// Render method for planet entities
+const renderPlanet = (
+  entity: Planet,
+  centerX: number,
+  centerY: number
+): Graphics => {
+  const nodeGraphics = new Graphics()
+  nodeGraphics.circle(0, 0, 15)
+  nodeGraphics.fill(0x4a90e2) // Blue color for planets
+  nodeGraphics.position.set(
+    centerX + entity.position.x,
+    centerY + entity.position.y
+  )
+
+  const label = new Text({
+    text: entity.name,
+    style: {
+      fontSize: 14,
+      fill: 0xffffff,
+    },
+  })
+  label.anchor.set(0.5)
+  label.position.set(0, -30)
   nodeGraphics.addChild(label)
 
   return nodeGraphics
@@ -71,6 +99,13 @@ const SolarSystemMap: React.FC = () => {
           window.innerHeight / 2
         )
         appRef.current!.stage.addChild(starGraphics)
+      } else if (entity.type === 'planet') {
+        const planetGraphics = renderPlanet(
+          entity as Planet,
+          window.innerWidth / 2,
+          window.innerHeight / 2
+        )
+        appRef.current!.stage.addChild(planetGraphics)
       }
     })
   }, [gameState])
