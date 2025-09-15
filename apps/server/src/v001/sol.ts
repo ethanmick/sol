@@ -7,7 +7,14 @@ export function setup(state: WorldState): WorldState {
 
   state.entities.push(sol)
 
-  const earth = new Planet({ x: 200, y: 0 }, 'Earth')
+  const earth = new Planet(
+    { x: 200, y: 0 }, // initial position
+    'Earth',
+    { x: 0, y: 0 }, // orbital center (Sol's position)
+    200, // orbital radius
+    0.00001, // orbital speed in radians per second
+    0 // starting angle (starts at rightmost position)
+  )
   state.entities.push(earth)
 
   return state
