@@ -1,4 +1,5 @@
 import { Planet } from '../game/entities/planet.js'
+import { Ship } from '../game/entities/ship.js'
 import { Star } from '../game/entities/star.js'
 import type { WorldState } from '../game/world-state.js'
 
@@ -52,6 +53,12 @@ export function setup(state: WorldState): WorldState {
     earthStartAngle // starting angle (starts at rightmost position)
   )
   state.entities.push(earth)
+
+  const pioneer = new Ship('ship-1', {
+    x: sol.position.x + 260,
+    y: sol.position.y - 120,
+  })
+  state.entities.push(pioneer)
 
   return state
 }

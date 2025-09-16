@@ -1,4 +1,4 @@
-import type { Planet, Star } from '@space/game'
+import type { Planet, Ship, Star } from '@space/game'
 import { Application, Graphics, Text } from 'pixi.js'
 import React, { useEffect, useRef } from 'react'
 import { useGameState } from './GameContext'
@@ -59,6 +59,23 @@ const renderPlanet = (
   return nodeGraphics
 }
 
+// Render method for ship entities (small dots)
+const renderShip = (
+  entity: Ship,
+  centerX: number,
+  centerY: number
+): Graphics => {
+  const shipGraphics = new Graphics()
+  shipGraphics.circle(0, 0, 5)
+  shipGraphics.fill(0xffffff)
+  shipGraphics.position.set(
+    centerX + entity.position.x,
+    centerY + entity.position.y
+  )
+
+  return shipGraphics
+}
+
 const SolarSystemMap: React.FC = () => {
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const appRef = useRef<Application | null>(null)
@@ -105,6 +122,13 @@ const SolarSystemMap: React.FC = () => {
           window.innerHeight / 2
         )
         appRef.current!.stage.addChild(planetGraphics)
+      } else if (entity.type === 'ship') {
+        const shipGraphics = renderShip(
+          entity as Ship,
+          window.innerWidth / 2,
+          window.innerHeight / 2
+        )
+        appRef.current!.stage.addChild(shipGraphics)
       }
     })
   }, [gameState])
