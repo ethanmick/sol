@@ -11,6 +11,7 @@
   },
   "dependencies": {
     "@space/api": "workspace:*",
+    "@space/game": "workspace:*",
     "pixi-viewport": "^6.0.3",
     "pixi.js": "^8.13.2",
     "react": "^19.1.1",
