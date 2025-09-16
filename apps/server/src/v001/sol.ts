@@ -3,17 +3,53 @@ import { Star } from '../game/entities/star.js'
 import type { WorldState } from '../game/world-state.js'
 
 export function setup(state: WorldState): WorldState {
-  const sol = new Star({ x: 0, y: 0 }, 'Sol')
+  const solPosition = { x: 0, y: 0 }
+  const sol = new Star(solPosition, 'Sol')
 
   state.entities.push(sol)
 
+  const mercuryOrbitRadius = 80
+  const mercuryStartAngle = Math.PI / 3
+  const mercury = new Planet(
+    {
+      x: sol.position.x + mercuryOrbitRadius * Math.cos(mercuryStartAngle),
+      y: sol.position.y + mercuryOrbitRadius * Math.sin(mercuryStartAngle),
+    },
+    'Mercury',
+    sol.position,
+    mercuryOrbitRadius,
+    0.00004, // TODO: tune orbital speeds once simulation pacing is locked
+    mercuryStartAngle
+  )
+  state.entities.push(mercury)
+
+  const venusOrbitRadius = 140
+  const venusStartAngle = (3 * Math.PI) / 4
+  const venus = new Planet(
+    {
+      x: sol.position.x + venusOrbitRadius * Math.cos(venusStartAngle),
+      y: sol.position.y + venusOrbitRadius * Math.sin(venusStartAngle),
+    },
+    'Venus',
+    sol.position,
+    venusOrbitRadius,
+    0.000016,
+    venusStartAngle
+  )
+  state.entities.push(venus)
+
+  const earthOrbitRadius = 200
+  const earthStartAngle = 0
   const earth = new Planet(
-    { x: 200, y: 0 }, // initial position
+    {
+      x: sol.position.x + earthOrbitRadius * Math.cos(earthStartAngle),
+      y: sol.position.y + earthOrbitRadius * Math.sin(earthStartAngle),
+    }, // initial position
     'Earth',
-    { x: 0, y: 0 }, // orbital center (Sol's position)
-    200, // orbital radius
+    sol.position, // orbital center (Sol's position)
+    earthOrbitRadius, // orbital radius
     0.00001, // orbital speed in radians per second
-    0 // starting angle (starts at rightmost position)
+    earthStartAngle // starting angle (starts at rightmost position)
   )
   state.entities.push(earth)
 
