@@ -10,6 +10,11 @@ export const ApiRequestSchema = z.discriminatedUnion('action', [
   z.object({
     action: z.literal('get_game_state'),
   }),
+  z.object({
+    action: z.literal('ship_fly_to'),
+    ship_id: z.string(),
+    target_id: z.string(),
+  }),
 ])
 
 // API Response schemas

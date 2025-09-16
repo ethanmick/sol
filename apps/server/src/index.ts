@@ -5,6 +5,7 @@ import { Hono } from 'hono'
 import { cors } from 'hono/cors'
 import { Simulation } from './game/simulation.js'
 import { WorldState } from './game/world-state.js'
+import { Ship } from './game/entities/ship.js'
 import { setup } from './v001/sol.js'
 
 const state = setup(new WorldState())
@@ -47,6 +48,45 @@ async function handle(request: ApiRequest): Promise<ApiResponse> {
   console.log('handling request', request.action)
   switch (request.action) {
     case 'get_game_state': {
+      return {
+        success: true,
+        data: state,
+      }
+    }
+
+    case 'ship_fly_to': {
+      const ship = state.entities.find(
+        (entity): entity is Ship => entity instanceof Ship && entity.id === request.ship_id
+      )
+
+      if (!ship) {
+        return {
+          success: false,
+          error: 'Ship not found',
+          code: 404,
+        }
+      }
+
+      const destination = state.entities.find((entity) => entity.id === request.target_id)
+
+      if (!destination) {
+        return {
+          success: false,
+          error: 'Destination not found',
+          code: 404,
+        }
+      }
+
+      if (destination === ship) {
+        return {
+          success: false,
+          error: 'Cannot fly to self',
+          code: 400,
+        }
+      }
+
+      ship.flyTo(destination)
+
       return {
         success: true,
         data: state,

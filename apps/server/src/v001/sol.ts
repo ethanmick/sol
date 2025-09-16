@@ -54,10 +54,14 @@ export function setup(state: WorldState): WorldState {
   )
   state.entities.push(earth)
 
-  const pioneer = new Ship('ship-1', {
-    x: sol.position.x + 260,
-    y: sol.position.y - 120,
-  })
+  const pioneer = new Ship(
+    {
+      x: mercury.position.x,
+      y: mercury.position.y,
+    },
+    'Pioneer',
+    mercury
+  )
   state.entities.push(pioneer)
 
   return state
