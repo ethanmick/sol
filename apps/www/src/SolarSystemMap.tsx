@@ -1,5 +1,6 @@
 import type { Planet, Ship, Star, WorldEntity } from '@space/game'
 import { Application, Graphics, Text } from 'pixi.js'
+import { Viewport } from 'pixi-viewport'
 import React, { useEffect, useRef } from 'react'
 import { useGameState } from './GameContext'
 
@@ -129,6 +130,8 @@ const renderShip = (
 const SolarSystemMap: React.FC = () => {
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const appRef = useRef<Application | null>(null)
+  const viewportRef = useRef<Viewport | null>(null)
+  const isInitialCenterRef = useRef<boolean>(false)
   const { gameState } = useGameState()
 
   useEffect(() => {
@@ -142,6 +145,24 @@ const SolarSystemMap: React.FC = () => {
         background: 0x000000,
       })
       appRef.current = app
+
+      // Create viewport with panning/dragging capabilities
+      const viewport = new Viewport({
+        screenWidth: window.innerWidth,
+        screenHeight: window.innerHeight,
+        worldWidth: 10000000, // Large world to contain solar system
+        worldHeight: 10000000,
+        events: app.renderer.events,
+      })
+
+      // Enable drag functionality
+      viewport.drag({
+        mouseButtons: 'left',
+      })
+
+      // Add viewport to stage
+      app.stage.addChild(viewport)
+      viewportRef.current = viewport
     })()
 
     return () => {
@@ -152,15 +173,15 @@ const SolarSystemMap: React.FC = () => {
   }, [])
 
   useEffect(() => {
-    const pixi = appRef.current
-    if (!pixi || !gameState?.entities) return
+    const viewport = viewportRef.current
+    if (!viewport || !gameState?.entities) return
 
     const kmToPx = computeDistanceScale(gameState.entities)
-    const centerX = window.innerWidth / 2
-    const centerY = window.innerHeight / 2
+    const centerX = viewport.worldWidth / 2
+    const centerY = viewport.worldHeight / 2
 
-    // Clear existing graphics
-    pixi.stage.removeChildren()
+    // Clear existing graphics from viewport
+    viewport.removeChildren()
 
     gameState.entities.forEach((entity) => {
       if (entity.type === 'star') {
@@ -170,7 +191,7 @@ const SolarSystemMap: React.FC = () => {
           centerY,
           kmToPx
         )
-        pixi.stage.addChild(starGraphics)
+        viewport.addChild(starGraphics)
       } else if (entity.type === 'planet') {
         const planet = entity as Planet
         if (kmToPx > 0) {
@@ -178,11 +199,11 @@ const SolarSystemMap: React.FC = () => {
           orbitGraphics.circle(0, 0, planet.orbit.averageRadiusKm * kmToPx)
           orbitGraphics.stroke({ width: 1, color: 0x333333, alpha: 0.45 })
           orbitGraphics.position.set(centerX, centerY)
-          pixi.stage.addChild(orbitGraphics)
+          viewport.addChild(orbitGraphics)
         }
 
         const planetGraphics = renderPlanet(planet, centerX, centerY, kmToPx)
-        pixi.stage.addChild(planetGraphics)
+        viewport.addChild(planetGraphics)
       } else if (entity.type === 'ship') {
         const shipGraphics = renderShip(
           entity as Ship,
@@ -190,9 +211,15 @@ const SolarSystemMap: React.FC = () => {
           centerY,
           kmToPx
         )
-        pixi.stage.addChild(shipGraphics)
+        viewport.addChild(shipGraphics)
       }
     })
+
+    // Center the viewport on the solar system only on initial load
+    if (!isInitialCenterRef.current) {
+      viewport.moveCenter(centerX, centerY)
+      isInitialCenterRef.current = true
+    }
   }, [gameState])
 
   return (
