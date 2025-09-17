@@ -1,9 +1,7 @@
-import { GameObjectSchema } from '@space/game'
+import { WorldStateSchema } from '@space/game'
 import { z } from 'zod'
 
-export const WorldStateSchema = z.object({
-  entities: z.array(GameObjectSchema),
-})
+export { WorldStateSchema }
 
 // API Request/Response schemas for single-endpoint JSON API
 export const ApiRequestSchema = z.discriminatedUnion('action', [

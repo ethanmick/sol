@@ -58,7 +58,7 @@ class FlyingState implements ShipState {
     const deltaY = targetPosition.y - this.ship.position.y
     const distance = Math.hypot(deltaX, deltaY)
 
-    if (distance <= Constants.ARRIVAL_TOLERANCE) {
+    if (distance <= Constants.ARRIVAL_TOLERANCE_KM) {
       this.ship.setState(new DockedState(this.ship, this.destination))
       return
     }
@@ -67,7 +67,9 @@ class FlyingState implements ShipState {
       return
     }
 
-    const travelDistance = Constants.SHIP_SPEED * delta * Constants.GAME_SPEED
+    const deltaSeconds = delta / 1000
+    const travelDistance =
+      Constants.SHIP_SPEED_KM_PER_S * deltaSeconds * Constants.GAME_SPEED
     const stepRatio = Math.min(1, travelDistance / distance)
 
     this.ship.position.x += deltaX * stepRatio

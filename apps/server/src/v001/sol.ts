@@ -1,66 +1,93 @@
 import { Planet } from '../game/entities/planet.js'
 import { Ship } from '../game/entities/ship.js'
 import { Star } from '../game/entities/star.js'
+import { Constants } from '../game/constants.js'
 import type { WorldState } from '../game/world-state.js'
 
 export function setup(state: WorldState): WorldState {
   const solPosition = { x: 0, y: 0 }
-  const sol = new Star(solPosition, 'Sol')
+  const sol = new Star(solPosition, 'Sol', 696_340)
 
   state.entities.push(sol)
 
-  const mercuryOrbitRadius = 80
-  const mercuryStartAngle = Math.PI / 3
-  const mercury = new Planet(
+  const planetConfigs = [
     {
-      x: sol.position.x + mercuryOrbitRadius * Math.cos(mercuryStartAngle),
-      y: sol.position.y + mercuryOrbitRadius * Math.sin(mercuryStartAngle),
+      name: 'Mercury',
+      radiusKm: 2_439.7,
+      orbitRadiusKm: 0.387_098 * Constants.KM_PER_AU,
+      orbitSpeedKmPerSec: 47.36,
+      initialAngleRad: Math.PI / 3,
     },
-    'Mercury',
-    sol.position,
-    mercuryOrbitRadius,
-    0.00004, // TODO: tune orbital speeds once simulation pacing is locked
-    mercuryStartAngle
-  )
-  state.entities.push(mercury)
-
-  const venusOrbitRadius = 140
-  const venusStartAngle = (3 * Math.PI) / 4
-  const venus = new Planet(
     {
-      x: sol.position.x + venusOrbitRadius * Math.cos(venusStartAngle),
-      y: sol.position.y + venusOrbitRadius * Math.sin(venusStartAngle),
+      name: 'Venus',
+      radiusKm: 6_051.8,
+      orbitRadiusKm: 0.723_332 * Constants.KM_PER_AU,
+      orbitSpeedKmPerSec: 35.02,
+      initialAngleRad: (3 * Math.PI) / 4,
     },
-    'Venus',
-    sol.position,
-    venusOrbitRadius,
-    0.000016,
-    venusStartAngle
-  )
-  state.entities.push(venus)
-
-  const earthOrbitRadius = 200
-  const earthStartAngle = 0
-  const earth = new Planet(
     {
-      x: sol.position.x + earthOrbitRadius * Math.cos(earthStartAngle),
-      y: sol.position.y + earthOrbitRadius * Math.sin(earthStartAngle),
-    }, // initial position
-    'Earth',
-    sol.position, // orbital center (Sol's position)
-    earthOrbitRadius, // orbital radius
-    0.00001, // orbital speed in radians per second
-    earthStartAngle // starting angle (starts at rightmost position)
+      name: 'Earth',
+      radiusKm: 6_371,
+      orbitRadiusKm: 1 * Constants.KM_PER_AU,
+      orbitSpeedKmPerSec: 29.78,
+      initialAngleRad: 0,
+    },
+    {
+      name: 'Mars',
+      radiusKm: 3_389.5,
+      orbitRadiusKm: 1.523_679 * Constants.KM_PER_AU,
+      orbitSpeedKmPerSec: 24.077,
+      initialAngleRad: Math.PI / 6,
+    },
+    {
+      name: 'Jupiter',
+      radiusKm: 69_911,
+      orbitRadiusKm: 5.204_4 * Constants.KM_PER_AU,
+      orbitSpeedKmPerSec: 13.07,
+      initialAngleRad: Math.PI / 2,
+    },
+    {
+      name: 'Saturn',
+      radiusKm: 58_232,
+      orbitRadiusKm: 9.582_6 * Constants.KM_PER_AU,
+      orbitSpeedKmPerSec: 9.69,
+      initialAngleRad: (5 * Math.PI) / 6,
+    },
+    {
+      name: 'Uranus',
+      radiusKm: 25_362,
+      orbitRadiusKm: 19.218_4 * Constants.KM_PER_AU,
+      orbitSpeedKmPerSec: 6.81,
+      initialAngleRad: (7 * Math.PI) / 6,
+    },
+    {
+      name: 'Neptune',
+      radiusKm: 24_622,
+      orbitRadiusKm: 30.110_4 * Constants.KM_PER_AU,
+      orbitSpeedKmPerSec: 5.43,
+      initialAngleRad: (4 * Math.PI) / 3,
+    },
+  ] as const
+
+  const planets = planetConfigs.map(
+    ({ name, radiusKm, orbitRadiusKm, orbitSpeedKmPerSec, initialAngleRad }) =>
+      new Planet(name, radiusKm, {
+        anchor: sol,
+        radiusKm: orbitRadiusKm,
+        speedKmPerSec: orbitSpeedKmPerSec,
+        initialAngleRad,
+      })
   )
-  state.entities.push(earth)
+
+  planets.forEach((planet) => state.entities.push(planet))
 
   const pioneer = new Ship(
     {
-      x: mercury.position.x,
-      y: mercury.position.y,
+      x: planets[0].position.x,
+      y: planets[0].position.y,
     },
     'Pioneer',
-    mercury
+    planets[0]
   )
   state.entities.push(pioneer)
 
