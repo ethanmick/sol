@@ -146,12 +146,17 @@ const SolarSystemMap: React.FC = () => {
       })
       appRef.current = app
 
+      // Calculate world dimensions based on content
+      // We'll use a reasonable multiplier of the screen dimensions
+      const worldWidth = window.innerWidth * 20
+      const worldHeight = window.innerHeight * 20
+
       // Create viewport with panning/dragging capabilities
       const viewport = new Viewport({
         screenWidth: window.innerWidth,
         screenHeight: window.innerHeight,
-        worldWidth: 10000000, // Large world to contain solar system
-        worldHeight: 10000000,
+        worldWidth: worldWidth,
+        worldHeight: worldHeight,
         events: app.renderer.events,
       })
 
@@ -171,6 +176,17 @@ const SolarSystemMap: React.FC = () => {
       viewport.clampZoom({
         minScale: 0.05,
         maxScale: 10,
+      })
+
+      // CRITICAL: Add clamping with underflow center
+      // This prevents the viewport from moving off-screen when zoomed out
+      viewport.clamp({
+        left: 0,
+        right: worldWidth,
+        top: 0,
+        bottom: worldHeight,
+        direction: 'all',
+        underflow: 'center', // This is the key - keeps content centered when smaller than screen
       })
 
       // Add viewport to stage
