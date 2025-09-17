@@ -23,7 +23,8 @@ const computeDistanceScale = (entities: WorldEntity[]): number => {
   }
 
   const earth = planets.find((planet) => planet.name === 'Earth')
-  const referenceOrbitKm = earth?.orbit.averageRadiusKm ??
+  const referenceOrbitKm =
+    earth?.orbit.averageRadiusKm ??
     planets.reduce(
       (max, planet) => Math.max(max, planet.orbit.averageRadiusKm),
       0
@@ -151,14 +152,15 @@ const SolarSystemMap: React.FC = () => {
   }, [])
 
   useEffect(() => {
-    if (!appRef.current || !gameState?.entities) return
+    const pixi = appRef.current
+    if (!pixi || !gameState?.entities) return
 
     const kmToPx = computeDistanceScale(gameState.entities)
     const centerX = window.innerWidth / 2
     const centerY = window.innerHeight / 2
 
     // Clear existing graphics
-    appRef.current.stage.removeChildren()
+    pixi.stage.removeChildren()
 
     gameState.entities.forEach((entity) => {
       if (entity.type === 'star') {
@@ -168,7 +170,7 @@ const SolarSystemMap: React.FC = () => {
           centerY,
           kmToPx
         )
-        appRef.current!.stage.addChild(starGraphics)
+        pixi.stage.addChild(starGraphics)
       } else if (entity.type === 'planet') {
         const planet = entity as Planet
         if (kmToPx > 0) {
@@ -176,11 +178,11 @@ const SolarSystemMap: React.FC = () => {
           orbitGraphics.circle(0, 0, planet.orbit.averageRadiusKm * kmToPx)
           orbitGraphics.stroke({ width: 1, color: 0x333333, alpha: 0.45 })
           orbitGraphics.position.set(centerX, centerY)
-          appRef.current!.stage.addChild(orbitGraphics)
+          pixi.stage.addChild(orbitGraphics)
         }
 
         const planetGraphics = renderPlanet(planet, centerX, centerY, kmToPx)
-        appRef.current!.stage.addChild(planetGraphics)
+        pixi.stage.addChild(planetGraphics)
       } else if (entity.type === 'ship') {
         const shipGraphics = renderShip(
           entity as Ship,
@@ -188,7 +190,7 @@ const SolarSystemMap: React.FC = () => {
           centerY,
           kmToPx
         )
-        appRef.current!.stage.addChild(shipGraphics)
+        pixi.stage.addChild(shipGraphics)
       }
     })
   }, [gameState])
