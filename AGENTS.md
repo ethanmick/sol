@@ -30,4 +30,4 @@ No automated harness is wired yet. Smoke-test changes manually: run both dev ser
 
 ## Commit & Pull Request Guidelines
 
-Short, descriptive commit subjects (`Rough orbit decay prototype`) help future cleanup passes. WIP commits are acceptable, but summarize the end-to-end impact in the PR description, call out known gaps, and list manual checks performed. Attach screenshots or request logs if gameplay or API responses changed meaningfully.
+Short, descriptive commit subjects (`Rough orbit decay prototype`) help future cleanup passes. Use conventional commit formatting for every commit (e.g. `feat: add asteroid belt renderer`). When a change is more than a trivial fix or feature, include a commit body that explains what changed, why it changed, and any context future reviewers need to understand quickly. WIP commits are not acceptable—each commit must be review-ready on its own. Summarize the end-to-end impact in the PR description, call out known gaps, and list manual checks performed. Attach screenshots or request logs if gameplay or API responses changed meaningfully.
