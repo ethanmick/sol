@@ -21,15 +21,18 @@ All commands should be run from the workspace root or the specific app directory
 cd apps/www && pnpm dev          # Start development server
 cd apps/www && pnpm build       # Build for production
 cd apps/www && pnpm lint        # Run ESLint
+cd apps/www && pnpm typecheck   # TypeScript type checking
 cd apps/www && pnpm preview     # Preview production build
 
 # Server
 cd apps/server && pnpm dev      # Start server in development mode
 cd apps/server && pnpm build    # Build server for production
+cd apps/server && pnpm typecheck # TypeScript type checking
 cd apps/server && pnpm start    # Start production server
 
 # API Package (shared types)
 pnpm build                       # Builds all packages including @space/api
+pnpm typecheck                   # TypeScript type checking for all packages
 ```
 
 ### From specific directories:
@@ -38,11 +41,13 @@ pnpm build                       # Builds all packages including @space/api
 pnpm dev          # Start development server (Vite)
 pnpm build        # TypeScript compile + Vite build
 pnpm lint         # Run ESLint
+pnpm typecheck    # TypeScript type checking
 pnpm preview      # Preview production build
 
 # From apps/server/
 pnpm dev          # Start server with tsx watch
 pnpm build        # TypeScript compile
+pnpm typecheck    # TypeScript type checking
 pnpm start        # Start compiled server
 ```
 

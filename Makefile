@@ -5,3 +5,7 @@ server:
 
 client:
 	pnpm --filter www run dev
+
+
+typecheck:
+	pnpm run typecheck
