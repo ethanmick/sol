@@ -16,10 +16,11 @@ Based on research, Pixi.js can handle all the requested map features. The best a
 
 - **Solution**: `pixi-viewport` has built-in zoom constraints
 - **Implementation**:
-  - `viewport.wheel()` for mouse wheel zooming
+  - `viewport.wheel({ smooth: 3 })` for mouse wheel zooming
   - `viewport.pinch()` for touch pinch-to-zoom
-  - Set `minWidth/minHeight` and `maxWidth/maxHeight` for zoom limits
+  - Use `viewport.clampZoom({ minScale: 0.05, maxScale: 10 })` for zoom limits
 - **Zoom to cursor**: Built-in support for zooming toward mouse position
+- **Key insight**: Use `minScale/maxScale` instead of `minWidth/maxWidth` for intuitive zoom control
 
 ### 3. Map Bounds ✅ **Fully Supported**
 
@@ -50,19 +51,13 @@ const viewport = new Viewport({
 })
 
 // Enable features
-viewport
-  .drag({ mouseButtons: 'left' })
-  .wheel({ smooth: 3 })
-  .clamp({
-    left: 0,
-    top: 0,
-    right: WORLD_WIDTH,
-    bottom: WORLD_HEIGHT,
-  })
-  .clampZoom({
-    minWidth: MIN_ZOOM_WIDTH,
-    maxWidth: MAX_ZOOM_WIDTH,
-  })
+viewport.drag({ mouseButtons: 'left' })
+viewport.wheel({ smooth: 3 })
+viewport.pinch()
+viewport.clampZoom({
+  minScale: 0.05,  // 5% scale (zoomed out)
+  maxScale: 10,    // 1000% scale (zoomed in)
+})
 
 // LOD system
 viewport.on('zoomed', () => {

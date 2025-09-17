@@ -1,6 +1,6 @@
 import type { Planet, Ship, Star, WorldEntity } from '@space/game'
-import { Application, Graphics, Text } from 'pixi.js'
 import { Viewport } from 'pixi-viewport'
+import { Application, Graphics, Text } from 'pixi.js'
 import React, { useEffect, useRef } from 'react'
 import { useGameState } from './GameContext'
 
@@ -158,6 +158,19 @@ const SolarSystemMap: React.FC = () => {
       // Enable drag functionality
       viewport.drag({
         mouseButtons: 'left',
+      })
+
+      // Enable wheel zooming
+      viewport.wheel({
+        smooth: 3,
+      })
+
+      // Enable pinch-to-zoom for touch devices
+      viewport.pinch()
+
+      viewport.clampZoom({
+        minScale: 0.05,
+        maxScale: 10,
       })
 
       // Add viewport to stage
