@@ -5,12 +5,21 @@ import { Hono } from 'hono'
 import { cors } from 'hono/cors'
 import { Simulation } from './game/simulation.js'
 import { WorldState } from './game/world-state.js'
-import { Ship } from './game/entities/ship.js'
+import {
+  createGetGameStateHandler,
+  createShipFlyToHandler,
+} from './handlers/index.js'
 import { setup } from './v001/sol.js'
 
 const state = setup(new WorldState())
 const simulation = new Simulation(state)
 simulation.start()
+
+// Create handlers with dependencies
+const handlers = {
+  get_game_state: createGetGameStateHandler(state),
+  ship_fly_to: createShipFlyToHandler(state),
+}
 
 export const api = new Hono()
 
@@ -46,60 +55,16 @@ api.post('/api', zValidator('json', ApiRequestSchema as any), async (c) => {
 
 async function handle(request: ApiRequest): Promise<ApiResponse> {
   console.log('handling request', request.action)
-  switch (request.action) {
-    case 'get_game_state': {
-      return {
-        success: true,
-        data: state,
-      }
+
+  const handler = handlers[request.action]
+  if (!handler) {
+    return {
+      success: false,
+      error: 'Unknown action',
+      code: 400,
     }
-
-    case 'ship_fly_to': {
-      const ship = state.entities.find(
-        (entity): entity is Ship => entity instanceof Ship && entity.id === request.ship_id
-      )
-
-      if (!ship) {
-        return {
-          success: false,
-          error: 'Ship not found',
-          code: 404,
-        }
-      }
-
-      const destination = state.entities.find((entity) => entity.id === request.target_id)
-
-      if (!destination) {
-        return {
-          success: false,
-          error: 'Destination not found',
-          code: 404,
-        }
-      }
-
-      if (destination === ship) {
-        return {
-          success: false,
-          error: 'Cannot fly to self',
-          code: 400,
-        }
-      }
-
-      ship.flyTo(destination)
-
-      return {
-        success: true,
-        data: state,
-      }
-    }
-
-    default:
-      return {
-        success: false,
-        error: 'Unknown action',
-        code: 400,
-      }
   }
+  return handler(request as any)
 }
 
 api.get('/healthz', (c) => {
