@@ -3,7 +3,6 @@ import { GameObjectSchema } from './game-object.js'
 import { OrbitSchema } from './orbit.js'
 
 export const PlanetSchema = GameObjectSchema.extend({
-  type: z.literal('planet'),
   radiusKm: z.number(),
   orbit: OrbitSchema,
 })

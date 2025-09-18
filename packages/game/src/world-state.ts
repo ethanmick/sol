@@ -3,12 +3,10 @@ import { PlanetSchema } from './game/planet.js'
 import { ShipSchema } from './game/ship.js'
 import { StarSchema } from './game/star.js'
 
-export const WorldEntitySchema = z.union([StarSchema, PlanetSchema, ShipSchema])
-
 export const WorldStateSchema = z.object({
-  entities: z.array(WorldEntitySchema),
-  stars: z.array(StarSchema),
+  stars: z.record(z.string(), StarSchema),
+  planets: z.record(z.string(), PlanetSchema),
+  ships: z.record(z.string(), ShipSchema),
 })
 
-export type WorldEntity = z.infer<typeof WorldEntitySchema>
 export type WorldState = z.infer<typeof WorldStateSchema>

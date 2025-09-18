@@ -1,4 +1,4 @@
-import type { Planet, Ship, Star, WorldEntity } from '@space/game'
+import type { Planet, Ship, Star } from '@space/game'
 import { Viewport } from 'pixi-viewport'
 import { Application, Graphics, Text } from 'pixi.js'
 import React, { useEffect, useRef } from 'react'
@@ -15,10 +15,7 @@ const STAR_RADIUS_MAX_PX = 140
 const clamp = (value: number, min: number, max: number) =>
   Math.min(Math.max(value, min), max)
 
-const computeDistanceScale = (entities: WorldEntity[]): number => {
-  const planets = entities.filter(
-    (entity): entity is Planet => entity.type === 'planet'
-  )
+const computeDistanceScale = (planets: Planet[]): number => {
   if (!planets.length) {
     return 1
   }
@@ -203,45 +200,33 @@ const SolarSystemMap: React.FC = () => {
 
   useEffect(() => {
     const viewport = viewportRef.current
-    if (!viewport || !gameState?.entities) return
+    if (!viewport || !gameState) return
 
-    const kmToPx = computeDistanceScale(gameState.entities)
+    const kmToPx = computeDistanceScale(Object.values(gameState.planets))
     const centerX = viewport.worldWidth / 2
     const centerY = viewport.worldHeight / 2
 
     // Clear existing graphics from viewport
     viewport.removeChildren()
 
-    gameState.entities.forEach((entity) => {
-      if (entity.type === 'star') {
-        const starGraphics = renderStar(
-          entity as Star,
-          centerX,
-          centerY,
-          kmToPx
-        )
-        viewport.addChild(starGraphics)
-      } else if (entity.type === 'planet') {
-        const planet = entity as Planet
-        if (kmToPx > 0) {
-          const orbitGraphics = new Graphics()
-          orbitGraphics.circle(0, 0, planet.orbit.averageRadiusKm * kmToPx)
-          orbitGraphics.stroke({ width: 1, color: 0x333333, alpha: 0.45 })
-          orbitGraphics.position.set(centerX, centerY)
-          viewport.addChild(orbitGraphics)
-        }
+    Object.values(gameState.stars).forEach((star) => {
+      viewport.addChild(renderStar(star, centerX, centerY, kmToPx))
+    })
 
-        const planetGraphics = renderPlanet(planet, centerX, centerY, kmToPx)
-        viewport.addChild(planetGraphics)
-      } else if (entity.type === 'ship') {
-        const shipGraphics = renderShip(
-          entity as Ship,
-          centerX,
-          centerY,
-          kmToPx
-        )
-        viewport.addChild(shipGraphics)
+    Object.values(gameState.planets).forEach((planet) => {
+      if (kmToPx > 0) {
+        const orbitGraphics = new Graphics()
+        orbitGraphics.circle(0, 0, planet.orbit.averageRadiusKm * kmToPx)
+        orbitGraphics.stroke({ width: 1, color: 0x333333, alpha: 0.45 })
+        orbitGraphics.position.set(centerX, centerY)
+        viewport.addChild(orbitGraphics)
       }
+
+      viewport.addChild(renderPlanet(planet, centerX, centerY, kmToPx))
+    })
+
+    Object.values(gameState.ships).forEach((ship) => {
+      viewport.addChild(renderShip(ship, centerX, centerY, kmToPx))
     })
 
     // Center the viewport on the solar system only on initial load

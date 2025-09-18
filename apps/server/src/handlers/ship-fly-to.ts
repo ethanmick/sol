@@ -1,5 +1,4 @@
 import type { ApiResponse } from '@space/api'
-import { Ship } from '../game/entities/ship.js'
 import type { WorldState } from '../game/world-state.js'
 
 export const createShipFlyToHandler = (state: WorldState) => {
@@ -7,10 +6,7 @@ export const createShipFlyToHandler = (state: WorldState) => {
     ship_id: string
     target_id: string
   }): Promise<ApiResponse<WorldState>> => {
-    const ship = state.entities.find(
-      (entity): entity is Ship =>
-        entity instanceof Ship && entity.id === request.ship_id
-    )
+    const ship = state.ships[request.ship_id]
 
     if (!ship) {
       return {
@@ -20,23 +16,14 @@ export const createShipFlyToHandler = (state: WorldState) => {
       }
     }
 
-    const destination = state.entities.find(
-      (entity) => entity.id === request.target_id
-    )
+    // TODO: Support flying to types of bodies other than planets
+    const destination = state.planets[request.target_id]
 
     if (!destination) {
       return {
         success: false,
         error: 'Destination not found',
         code: 404,
-      }
-    }
-
-    if (destination === ship) {
-      return {
-        success: false,
-        error: 'Cannot fly to self',
-        code: 400,
       }
     }
 

@@ -3,7 +3,7 @@ import { randomUUID } from 'node:crypto'
 import type { Position } from '../util/position.js'
 
 export abstract class GameObject implements GameObjectData {
-  public readonly id: string
+  public id: string
 
   constructor(public position: Position, public name: string) {
     this.id = randomUUID()
@@ -17,7 +17,6 @@ export abstract class GameObject implements GameObjectData {
       id: this.id,
       name: this.name,
       position: { x, y },
-      type: (this as { type?: string }).type,
     }
   }
 }

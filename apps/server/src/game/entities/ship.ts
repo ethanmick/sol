@@ -78,7 +78,6 @@ class FlyingState implements ShipState {
 }
 
 export class Ship extends GameObject implements ShipData {
-  public type = 'ship' as const
   public status: ShipStatus = 'docked'
   public docked_to: string | null = null
   public destination_id: string | null = null

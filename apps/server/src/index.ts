@@ -59,11 +59,11 @@ const RpcRequestSchema = z.object({
 api.post('/rpc', zValidator('json', RpcRequestSchema), async (c) => {
   const { method, params } = c.req.valid('json')
 
+  console.log('handling rpc:', method, params)
+
   try {
     const methodSchema = rpc[method]
     const validatedParams = methodSchema.req.parse(params)
-
-    console.log('handling RPC:', method, validatedParams)
 
     // Execute the RPC handler
     const result = await rpcHandler(method, validatedParams)

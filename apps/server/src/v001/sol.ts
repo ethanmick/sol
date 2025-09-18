@@ -7,12 +7,11 @@ import type { WorldState } from '../game/world-state.js'
 export function setup(state: WorldState): WorldState {
   const solPosition = { x: 0, y: 0 }
   const sol = new Star(solPosition, 'Sol', 696_340)
-
-  state.entities.push(sol)
-  state.stars.push(sol)
+  state.addStar(sol)
 
   const planetConfigs = [
     {
+      id: 'mercury',
       name: 'Mercury',
       radiusKm: 2_439.7,
       orbitRadiusKm: 0.387_098 * Constants.KM_PER_AU,
@@ -20,6 +19,7 @@ export function setup(state: WorldState): WorldState {
       initialAngleRad: Math.PI / 3,
     },
     {
+      id: 'venus',
       name: 'Venus',
       radiusKm: 6_051.8,
       orbitRadiusKm: 0.723_332 * Constants.KM_PER_AU,
@@ -27,6 +27,7 @@ export function setup(state: WorldState): WorldState {
       initialAngleRad: (3 * Math.PI) / 4,
     },
     {
+      id: 'earth',
       name: 'Earth',
       radiusKm: 6_371,
       orbitRadiusKm: 1 * Constants.KM_PER_AU,
@@ -34,6 +35,7 @@ export function setup(state: WorldState): WorldState {
       initialAngleRad: 0,
     },
     {
+      id: 'mars',
       name: 'Mars',
       radiusKm: 3_389.5,
       orbitRadiusKm: 1.523_679 * Constants.KM_PER_AU,
@@ -41,6 +43,7 @@ export function setup(state: WorldState): WorldState {
       initialAngleRad: Math.PI / 6,
     },
     {
+      id: 'jupiter',
       name: 'Jupiter',
       radiusKm: 69_911,
       orbitRadiusKm: 5.204_4 * Constants.KM_PER_AU,
@@ -48,6 +51,7 @@ export function setup(state: WorldState): WorldState {
       initialAngleRad: Math.PI / 2,
     },
     {
+      id: 'saturn',
       name: 'Saturn',
       radiusKm: 58_232,
       orbitRadiusKm: 9.582_6 * Constants.KM_PER_AU,
@@ -55,6 +59,7 @@ export function setup(state: WorldState): WorldState {
       initialAngleRad: (5 * Math.PI) / 6,
     },
     {
+      id: 'uranus',
       name: 'Uranus',
       radiusKm: 25_362,
       orbitRadiusKm: 19.218_4 * Constants.KM_PER_AU,
@@ -62,6 +67,7 @@ export function setup(state: WorldState): WorldState {
       initialAngleRad: (7 * Math.PI) / 6,
     },
     {
+      id: 'neptune',
       name: 'Neptune',
       radiusKm: 24_622,
       orbitRadiusKm: 30.110_4 * Constants.KM_PER_AU,
@@ -71,16 +77,25 @@ export function setup(state: WorldState): WorldState {
   ] as const
 
   const planets = planetConfigs.map(
-    ({ name, radiusKm, orbitRadiusKm, orbitSpeedKmPerSec, initialAngleRad }) =>
-      new Planet(name, radiusKm, {
+    ({
+      id,
+      name,
+      radiusKm,
+      orbitRadiusKm,
+      orbitSpeedKmPerSec,
+      initialAngleRad,
+    }) => {
+      const planet = new Planet(name, radiusKm, {
         anchor: sol,
         radiusKm: orbitRadiusKm,
         speedKmPerSec: orbitSpeedKmPerSec,
         initialAngleRad,
       })
+      planet.id = id
+      state.addPlanet(planet)
+      return planet
+    }
   )
-
-  planets.forEach((planet) => state.entities.push(planet))
 
   const pioneer = new Ship(
     {
@@ -90,7 +105,8 @@ export function setup(state: WorldState): WorldState {
     'Pioneer',
     planets[0]
   )
-  state.entities.push(pioneer)
+  pioneer.id = 'pioneer-1'
+  state.addShip(pioneer)
 
   return state
 }
