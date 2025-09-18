@@ -1,8 +1,9 @@
 export {
-  // API schemas
-  ApiRequestSchema,
-  ApiResponseSchema,
-  // API types
-  type ApiRequest,
+  rpc,
   type ApiResponse,
+  type Method,
+  type Req,
+  type Res,
+  type Rpc,
+  type RpcHandler,
 } from './schemas.js'

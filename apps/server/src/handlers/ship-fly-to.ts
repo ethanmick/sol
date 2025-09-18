@@ -1,11 +1,15 @@
 import type { ApiResponse } from '@space/api'
-import type { WorldState } from '../game/world-state.js'
 import { Ship } from '../game/entities/ship.js'
+import type { WorldState } from '../game/world-state.js'
 
 export const createShipFlyToHandler = (state: WorldState) => {
-  return async (request: { ship_id: string; target_id: string }): Promise<ApiResponse> => {
+  return async (request: {
+    ship_id: string
+    target_id: string
+  }): Promise<ApiResponse<WorldState>> => {
     const ship = state.entities.find(
-      (entity): entity is Ship => entity instanceof Ship && entity.id === request.ship_id
+      (entity): entity is Ship =>
+        entity instanceof Ship && entity.id === request.ship_id
     )
 
     if (!ship) {
@@ -16,7 +20,9 @@ export const createShipFlyToHandler = (state: WorldState) => {
       }
     }
 
-    const destination = state.entities.find((entity) => entity.id === request.target_id)
+    const destination = state.entities.find(
+      (entity) => entity.id === request.target_id
+    )
 
     if (!destination) {
       return {

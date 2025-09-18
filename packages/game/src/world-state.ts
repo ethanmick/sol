@@ -7,6 +7,7 @@ export const WorldEntitySchema = z.union([StarSchema, PlanetSchema, ShipSchema])
 
 export const WorldStateSchema = z.object({
   entities: z.array(WorldEntitySchema),
+  stars: z.array(StarSchema),
 })
 
 export type WorldEntity = z.infer<typeof WorldEntitySchema>

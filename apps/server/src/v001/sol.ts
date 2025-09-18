@@ -1,7 +1,7 @@
+import { Constants } from '../game/constants.js'
 import { Planet } from '../game/entities/planet.js'
 import { Ship } from '../game/entities/ship.js'
 import { Star } from '../game/entities/star.js'
-import { Constants } from '../game/constants.js'
 import type { WorldState } from '../game/world-state.js'
 
 export function setup(state: WorldState): WorldState {
@@ -9,6 +9,7 @@ export function setup(state: WorldState): WorldState {
   const sol = new Star(solPosition, 'Sol', 696_340)
 
   state.entities.push(sol)
+  state.stars.push(sol)
 
   const planetConfigs = [
     {
