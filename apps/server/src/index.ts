@@ -1,16 +1,43 @@
 import { serve } from '@hono/node-server'
 import { zValidator } from '@hono/zod-validator'
-import { ApiRequestSchema, type ApiRequest, type ApiResponse } from '@space/api'
+import {
+  rpc,
+  type ApiResponse,
+  type Method,
+  type Req,
+  type Res,
+} from '@space/api'
 import { Hono } from 'hono'
 import { cors } from 'hono/cors'
+import { z } from 'zod'
 import { Simulation } from './game/simulation.js'
 import { WorldState } from './game/world-state.js'
-import { Ship } from './game/entities/ship.js'
+import { createShipFlyToHandler } from './handlers/index.js'
 import { setup } from './v001/sol.js'
 
 const state = setup(new WorldState())
 const simulation = new Simulation(state)
 simulation.start()
+
+const rpcHandler = async <M extends Method>(
+  method: M,
+  input: Req<M>
+): Promise<Res<M>> => {
+  switch (method) {
+    case 'get_game_state':
+      return state as Res<M>
+    case 'ship_fly_to': {
+      const handler = createShipFlyToHandler(state)
+      const response = await handler(input as Req<'ship_fly_to'>)
+      if (!response.success) {
+        throw new Error(response.error)
+      }
+      return response.data as Res<M>
+    }
+    default:
+      throw new Error(`Unknown method: ${method}`)
+  }
+}
 
 export const api = new Hono()
 
@@ -23,84 +50,44 @@ api.use(
   })
 )
 
-api.post('/api', zValidator('json', ApiRequestSchema as any), async (c) => {
-  const request = c.req.valid('json')
+// Create RPC endpoint schema
+const RpcRequestSchema = z.object({
+  method: z.enum(Object.keys(rpc) as [Method, ...Method[]]),
+  params: z.any(), // Will be validated per-method
+})
+
+api.post('/rpc', zValidator('json', RpcRequestSchema), async (c) => {
+  const { method, params } = c.req.valid('json')
+
+  console.log('handling rpc:', method, params)
 
   try {
-    const response: ApiResponse = await handle(request)
-    if (!response.success && response.code) {
-      return c.json(response, response.code as any)
-    }
+    const methodSchema = rpc[method]
+    const validatedParams = methodSchema.req.parse(params)
 
+    // Execute the RPC handler
+    const result = await rpcHandler(method, validatedParams)
+
+    // Validate response
+    const validatedResult = methodSchema.res.parse(result)
+
+    const response: ApiResponse<any> = {
+      success: true,
+      data: validatedResult,
+    }
     return c.json(response)
   } catch (error) {
-    console.error('API error:', error)
-    const errorResponse: ApiResponse = {
+    console.error('RPC error:', error)
+    const errorMessage =
+      error instanceof Error ? error.message : 'Internal server error'
+    const errorResponse: ApiResponse<any> = {
       success: false,
-      error: 'Internal server error',
+      error: errorMessage,
       code: 500,
     }
     return c.json(errorResponse, 500)
   }
 })
-
-async function handle(request: ApiRequest): Promise<ApiResponse> {
-  console.log('handling request', request.action)
-  switch (request.action) {
-    case 'get_game_state': {
-      return {
-        success: true,
-        data: state,
-      }
-    }
-
-    case 'ship_fly_to': {
-      const ship = state.entities.find(
-        (entity): entity is Ship => entity instanceof Ship && entity.id === request.ship_id
-      )
-
-      if (!ship) {
-        return {
-          success: false,
-          error: 'Ship not found',
-          code: 404,
-        }
-      }
-
-      const destination = state.entities.find((entity) => entity.id === request.target_id)
-
-      if (!destination) {
-        return {
-          success: false,
-          error: 'Destination not found',
-          code: 404,
-        }
-      }
-
-      if (destination === ship) {
-        return {
-          success: false,
-          error: 'Cannot fly to self',
-          code: 400,
-        }
-      }
-
-      ship.flyTo(destination)
-
-      return {
-        success: true,
-        data: state,
-      }
-    }
-
-    default:
-      return {
-        success: false,
-        error: 'Unknown action',
-        code: 400,
-      }
-  }
-}
 
 api.get('/healthz', (c) => {
   return c.text('ok')

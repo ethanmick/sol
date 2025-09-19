@@ -1,4 +1,4 @@
-import type { Planet, Ship, Star, WorldEntity } from '@space/game'
+import type { Moon, Planet, Ship, Star } from '@space/game'
 import { Viewport } from 'pixi-viewport'
 import { Application, Graphics, Text } from 'pixi.js'
 import React, { useEffect, useRef } from 'react'
@@ -12,22 +12,23 @@ const STAR_RADIUS_SCALE = 0.00005
 const STAR_RADIUS_MIN_PX = 24
 const STAR_RADIUS_MAX_PX = 140
 
+const MOON_RADIUS_SCALE = 0.003
+const MOON_RADIUS_MIN_PX = 2
+const MOON_RADIUS_MAX_PX = 20
+
 const clamp = (value: number, min: number, max: number) =>
   Math.min(Math.max(value, min), max)
 
-const computeDistanceScale = (entities: WorldEntity[]): number => {
-  const planets = entities.filter(
-    (entity): entity is Planet => entity.type === 'planet'
-  )
+const computeDistanceScale = (planets: Planet[]): number => {
   if (!planets.length) {
     return 1
   }
 
   const earth = planets.find((planet) => planet.name === 'Earth')
   const referenceOrbitKm =
-    earth?.orbit.averageRadiusKm ??
+    earth?.orbit.average_radius_km ??
     planets.reduce(
-      (max, planet) => Math.max(max, planet.orbit.averageRadiusKm),
+      (max, planet) => Math.max(max, planet.orbit.average_radius_km),
       0
     )
 
@@ -77,26 +78,26 @@ const renderStar = (
 
 // Render method for planet entities
 const renderPlanet = (
-  entity: Planet,
+  planet: Planet,
   centerX: number,
   centerY: number,
   kmToPx: number
 ): Graphics => {
   const nodeGraphics = new Graphics()
   const radiusPx = clamp(
-    entity.radiusKm * PLANET_RADIUS_SCALE,
+    planet.radius_km * PLANET_RADIUS_SCALE,
     PLANET_RADIUS_MIN_PX,
     PLANET_RADIUS_MAX_PX
   )
   nodeGraphics.circle(0, 0, radiusPx)
   nodeGraphics.fill(0x4a90e2) // Blue color for planets
   nodeGraphics.position.set(
-    centerX + entity.position.x * kmToPx,
-    centerY + entity.position.y * kmToPx
+    centerX + planet.position.x * kmToPx,
+    centerY + planet.position.y * kmToPx
   )
 
   const label = new Text({
-    text: entity.name,
+    text: planet.name,
     style: {
       fontSize: 14,
       fill: 0xffffff,
@@ -104,6 +105,40 @@ const renderPlanet = (
   })
   label.anchor.set(0.5)
   label.position.set(0, -30)
+  nodeGraphics.addChild(label)
+
+  return nodeGraphics
+}
+
+// Render method for moon entities
+const renderMoon = (
+  moon: Moon,
+  centerX: number,
+  centerY: number,
+  kmToPx: number
+): Graphics => {
+  const nodeGraphics = new Graphics()
+  const radiusPx = clamp(
+    moon.radius_km * MOON_RADIUS_SCALE,
+    MOON_RADIUS_MIN_PX,
+    MOON_RADIUS_MAX_PX
+  )
+  nodeGraphics.circle(0, 0, radiusPx)
+  nodeGraphics.fill(0x999999) // Gray color for moons
+  nodeGraphics.position.set(
+    centerX + moon.position.x * kmToPx,
+    centerY + moon.position.y * kmToPx
+  )
+
+  const label = new Text({
+    text: moon.name,
+    style: {
+      fontSize: 10,
+      fill: 0xcccccc,
+    },
+  })
+  label.anchor.set(0.5)
+  label.position.set(0, -15)
   nodeGraphics.addChild(label)
 
   return nodeGraphics
@@ -203,45 +238,49 @@ const SolarSystemMap: React.FC = () => {
 
   useEffect(() => {
     const viewport = viewportRef.current
-    if (!viewport || !gameState?.entities) return
+    if (!viewport || !gameState) return
 
-    const kmToPx = computeDistanceScale(gameState.entities)
+    const kmToPx = computeDistanceScale(Object.values(gameState.planets))
     const centerX = viewport.worldWidth / 2
     const centerY = viewport.worldHeight / 2
 
     // Clear existing graphics from viewport
     viewport.removeChildren()
 
-    gameState.entities.forEach((entity) => {
-      if (entity.type === 'star') {
-        const starGraphics = renderStar(
-          entity as Star,
-          centerX,
-          centerY,
-          kmToPx
-        )
-        viewport.addChild(starGraphics)
-      } else if (entity.type === 'planet') {
-        const planet = entity as Planet
+    Object.values(gameState.stars).forEach((star) => {
+      viewport.addChild(renderStar(star, centerX, centerY, kmToPx))
+    })
+
+    Object.values(gameState.planets).forEach((planet) => {
+      if (kmToPx > 0) {
+        const orbitGraphics = new Graphics()
+        orbitGraphics.circle(0, 0, planet.orbit.average_radius_km * kmToPx)
+        orbitGraphics.stroke({ width: 1, color: 0x333333, alpha: 0.45 })
+        orbitGraphics.position.set(centerX, centerY)
+        viewport.addChild(orbitGraphics)
+      }
+
+      viewport.addChild(renderPlanet(planet, centerX, centerY, kmToPx))
+
+      // Render moons for this planet
+      planet.moons?.forEach((moon) => {
         if (kmToPx > 0) {
           const orbitGraphics = new Graphics()
-          orbitGraphics.circle(0, 0, planet.orbit.averageRadiusKm * kmToPx)
-          orbitGraphics.stroke({ width: 1, color: 0x333333, alpha: 0.45 })
-          orbitGraphics.position.set(centerX, centerY)
+          orbitGraphics.circle(0, 0, moon.orbit.average_radius_km * kmToPx)
+          orbitGraphics.stroke({ width: 1, color: 0x666666, alpha: 0.3 })
+          orbitGraphics.position.set(
+            centerX + planet.position.x * kmToPx,
+            centerY + planet.position.y * kmToPx
+          )
           viewport.addChild(orbitGraphics)
         }
 
-        const planetGraphics = renderPlanet(planet, centerX, centerY, kmToPx)
-        viewport.addChild(planetGraphics)
-      } else if (entity.type === 'ship') {
-        const shipGraphics = renderShip(
-          entity as Ship,
-          centerX,
-          centerY,
-          kmToPx
-        )
-        viewport.addChild(shipGraphics)
-      }
+        viewport.addChild(renderMoon(moon, centerX, centerY, kmToPx))
+      })
+    })
+
+    Object.values(gameState.ships).forEach((ship) => {
+      viewport.addChild(renderShip(ship, centerX, centerY, kmToPx))
     })
 
     // Center the viewport on the solar system only on initial load

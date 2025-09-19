@@ -1,10 +1,30 @@
 import type { WorldState as WorldStateData } from '@space/game'
-import type { GameObject } from './entities/game-object.js'
+import type { Planet } from './entities/planet.js'
+import type { Ship } from './entities/ship.js'
+import type { Star } from './entities/star.js'
 
 export class WorldState implements WorldStateData {
-  public entities: GameObject[] = []
+  public stars: Record<string, Star> = {}
+  public planets: Record<string, Planet> = {}
+  public ships: Record<string, Ship> = {}
 
   public update(delta: number) {
-    this.entities.forEach((entity) => entity.update(delta))
+    ;[
+      ...Object.values(this.stars),
+      ...Object.values(this.planets),
+      ...Object.values(this.ships),
+    ].forEach((e) => e.update(delta))
+  }
+
+  public addStar(star: Star) {
+    this.stars[star.id] = star
+  }
+
+  public addPlanet(planet: Planet) {
+    this.planets[planet.id] = planet
+  }
+
+  public addShip(ship: Ship) {
+    this.ships[ship.id] = ship
   }
 }
