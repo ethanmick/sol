@@ -1,8 +1,7 @@
-import type { Planet as PlanetData } from '@space/game'
+import type { Moon as MoonData } from '@space/game'
 import { Constants } from '../constants.js'
 import type { Position } from '../util/position.js'
 import { GameObject } from './game-object.js'
-import { Moon } from './moon.js'
 
 interface OrbitConfig {
   anchor: GameObject
@@ -11,13 +10,12 @@ interface OrbitConfig {
   initialAngleRad?: number
 }
 
-export class Planet extends GameObject implements PlanetData {
+export class Moon extends GameObject implements MoonData {
   private readonly orbitalAnchor: GameObject
   private readonly orbitalRadiusKm: number
   private readonly orbitalSpeedKmPerSec: number
   private readonly angularSpeedRadPerSec: number
   private currentAngle: number
-  public moons: Moon[] = []
 
   constructor(name: string, public radius_km: number, orbit: OrbitConfig) {
     const initialAngle = orbit.initialAngleRad ?? 0
@@ -52,13 +50,6 @@ export class Planet extends GameObject implements PlanetData {
       anchorPosition.x + this.orbitalRadiusKm * Math.cos(this.currentAngle)
     this.position.y =
       anchorPosition.y + this.orbitalRadiusKm * Math.sin(this.currentAngle)
-
-    // Update all moons
-    this.moons.forEach((moon) => moon.update(delta))
-  }
-
-  addMoon(moon: Moon): void {
-    this.moons.push(moon)
   }
 
   get orbit() {
@@ -75,7 +66,6 @@ export class Planet extends GameObject implements PlanetData {
       ...super.toJSON(),
       radius_km: this.radius_km,
       orbit: this.orbit,
-      moons: this.moons.map((moon) => moon.toJSON()),
     }
   }
 }

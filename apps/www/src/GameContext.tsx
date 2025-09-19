@@ -43,7 +43,7 @@ export function GameProvider({
     }, pollInterval)
 
     return () => clearInterval(interval)
-  }, [])
+  }, [pollInterval, getGameState])
 
   const contextValue: GameContextValue = {
     state: world,

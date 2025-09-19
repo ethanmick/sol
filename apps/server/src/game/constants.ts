@@ -1,6 +1,4 @@
 export const Constants = {
-  /** Number of kilometers in a single Astronomical Unit (mean Earth→Sun distance). */
-  KM_PER_AU: 149_597_870.7,
   // Global time scale multiplier so planetary periods remain proportional but playable.
   // TODO: Expose this as part of a pacing/fast-forward config once UX is defined.
   GAME_SPEED: 100_000,

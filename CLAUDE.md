@@ -8,6 +8,7 @@ This is a pnpm monorepo workspace with the following structure:
 - `apps/www/` - React + TypeScript + Vite client application
 - `apps/server/` - Hono + TypeScript server application
 - `packages/api/` - Shared API types and schemas (Zod + TypeScript)
+- `packages/game/` - Core game logic and world state schemas
 - Uses pnpm workspaces defined in `pnpm-workspace.yaml`
 - Package manager: pnpm@10.11.0
 
@@ -30,8 +31,8 @@ cd apps/server && pnpm build    # Build server for production
 cd apps/server && pnpm typecheck # TypeScript type checking
 cd apps/server && pnpm start    # Start production server
 
-# API Package (shared types)
-pnpm build                       # Builds all packages including @space/api
+# Packages (shared types and game logic)
+pnpm build                       # Builds all packages including @space/api and @space/game
 pnpm typecheck                   # TypeScript type checking for all packages
 ```
 
@@ -69,23 +70,27 @@ pnpm start        # Start compiled server
 ### Shared API (`packages/api/`)
 - **Zod** schemas for runtime validation
 - **TypeScript** types generated from Zod schemas
-- Discriminated union types for type-safe API requests/responses
+- RPC-style API with type-safe method definitions
+
+### Game Package (`packages/game/`)
+- **Zod** schemas for game entities (Ships, Planets, Stars)
+- **WorldState** schema and type definitions
+- Core game logic and data structures
 
 ## API Architecture
 
-The project uses a **single-endpoint JSON API** architecture:
+The project uses a **RPC-style JSON API** architecture:
 
 ### Server Endpoint
-- **URL**: `POST /api`
+- **URL**: `POST /rpc`
 - **Content-Type**: `application/json`
 - **Validation**: Automatic via Zod schemas
 
 ### Request Format
-All requests use discriminated union based on `action` field:
+All requests use RPC format with method and params:
 ```json
-{ "action": "get_game_state" }
-{ "action": "ship_depart", "ship_id": "ship-1", "dest_node_id": "node-2" }
-{ "action": "ship_buy", "ship_id": "ship-1", "units": 10 }
+{ "method": "get_game_state", "params": {} }
+{ "method": "ship_fly_to", "params": { "ship_id": "ship-1", "target_id": "node-2" } }
 ```
 
 ### Response Format
@@ -99,22 +104,23 @@ All responses follow success/error pattern:
 ```
 
 ### Type Safety
-- **Shared schemas** in `packages/api/src/schemas.ts`
+- **RPC definitions** in `packages/api/src/schemas.ts` with method schemas
 - **Client & server** import same types from `@space/api`
 - **Runtime validation** with Zod on server
-- **Compile-time safety** with TypeScript discriminated unions
+- **Compile-time safety** with TypeScript for method parameters and return types
 
 ### Client Usage
 ```typescript
 import { apiClient } from './api-client'
 const gameState = await apiClient.getGameState()
-await apiClient.shipDepart('ship-1', 'node-2')
+await apiClient.shipFlyTo('ship-1', 'node-2')
 ```
 
 ## Key Configuration Files
 
 - `pnpm-workspace.yaml` - Workspace configuration
 - `packages/api/tsconfig.json` - Shared API types configuration
+- `packages/game/tsconfig.json` - Game logic types configuration
 - `apps/www/vite.config.ts` - Vite configuration
 - `apps/www/tsconfig.json` - Client TypeScript config
 - `apps/server/tsconfig.json` - Server TypeScript config
@@ -122,7 +128,8 @@ await apiClient.shipDepart('ship-1', 'node-2')
 
 ## Development Workflow
 
-1. **Shared Types**: All API changes start in `packages/api/src/schemas.ts`
-2. **Server**: Update handler in `apps/server/src/api.ts` 
-3. **Client**: Use typed client methods from `apps/www/src/api-client.ts`
-4. **Build Order**: API package must be built before server/client
+1. **Game Types**: Game entities and world state defined in `packages/game/src/`
+2. **API Types**: RPC method definitions in `packages/api/src/schemas.ts`
+3. **Server**: RPC handlers in `apps/server/src/handlers/` and routing in `apps/server/src/index.ts`
+4. **Client**: Use typed client methods from `apps/www/src/api-client.ts`
+5. **Build Order**: Game and API packages must be built before server/client
