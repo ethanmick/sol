@@ -105,7 +105,7 @@ export function setup(state: WorldState): WorldState {
   // Add Luna (Earth's moon)
   const luna = new Moon('Luna', 1_737.4, {
     anchor: earth,
-    radiusKm: 1_384_400, // Average distance from Earth
+    radiusKm: 384_400, // Average distance from Earth
     speedKmPerSec: 10.022, // Average orbital speed
     initialAngleRad: 0,
   })
