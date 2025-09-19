@@ -1,3 +1,4 @@
+export { AsteroidSchema, type Asteroid } from './game/asteroid.js'
 export { GameObjectSchema, type GameObject } from './game/game-object.js'
 export { MoonSchema, type Moon } from './game/moon.js'
 export { OrbitSchema, type Orbit } from './game/orbit.js'

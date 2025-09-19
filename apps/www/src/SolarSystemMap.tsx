@@ -1,4 +1,4 @@
-import type { Moon, Planet, Ship, Star } from '@space/game'
+import type { Asteroid, Moon, Planet, Ship, Star } from '@space/game'
 import { Viewport } from 'pixi-viewport'
 import { Application, Graphics, Text } from 'pixi.js'
 import React, { useEffect, useRef } from 'react'
@@ -15,6 +15,10 @@ const STAR_RADIUS_MAX_PX = 140
 const MOON_RADIUS_SCALE = 0.003
 const MOON_RADIUS_MIN_PX = 2
 const MOON_RADIUS_MAX_PX = 20
+
+const ASTEROID_RADIUS_SCALE = 0.008
+const ASTEROID_RADIUS_MIN_PX = 1
+const ASTEROID_RADIUS_MAX_PX = 8
 
 const clamp = (value: number, min: number, max: number) =>
   Math.min(Math.max(value, min), max)
@@ -139,6 +143,40 @@ const renderMoon = (
   })
   label.anchor.set(0.5)
   label.position.set(0, -15)
+  nodeGraphics.addChild(label)
+
+  return nodeGraphics
+}
+
+// Render method for asteroid entities
+const renderAsteroid = (
+  asteroid: Asteroid,
+  centerX: number,
+  centerY: number,
+  kmToPx: number
+): Graphics => {
+  const nodeGraphics = new Graphics()
+  const radiusPx = clamp(
+    asteroid.radius_km * ASTEROID_RADIUS_SCALE,
+    ASTEROID_RADIUS_MIN_PX,
+    ASTEROID_RADIUS_MAX_PX
+  )
+  nodeGraphics.circle(0, 0, radiusPx)
+  nodeGraphics.fill(0x8B4513) // Brown color for asteroids
+  nodeGraphics.position.set(
+    centerX + asteroid.position.x * kmToPx,
+    centerY + asteroid.position.y * kmToPx
+  )
+
+  const label = new Text({
+    text: asteroid.name,
+    style: {
+      fontSize: 8,
+      fill: 0xaaaaaa,
+    },
+  })
+  label.anchor.set(0.5)
+  label.position.set(0, -12)
   nodeGraphics.addChild(label)
 
   return nodeGraphics
@@ -277,6 +315,18 @@ const SolarSystemMap: React.FC = () => {
 
         viewport.addChild(renderMoon(moon, centerX, centerY, kmToPx))
       })
+    })
+
+    Object.values(gameState.asteroids || {}).forEach((asteroid) => {
+      if (kmToPx > 0) {
+        const orbitGraphics = new Graphics()
+        orbitGraphics.circle(0, 0, asteroid.orbit.average_radius_km * kmToPx)
+        orbitGraphics.stroke({ width: 1, color: 0x444444, alpha: 0.25 })
+        orbitGraphics.position.set(centerX, centerY)
+        viewport.addChild(orbitGraphics)
+      }
+
+      viewport.addChild(renderAsteroid(asteroid, centerX, centerY, kmToPx))
     })
 
     Object.values(gameState.ships).forEach((ship) => {

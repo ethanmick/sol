@@ -1,4 +1,5 @@
 import { Constants } from '@space/game'
+import { Asteroid } from '../game/entities/asteroid.js'
 import { Moon } from '../game/entities/moon.js'
 import { Planet } from '../game/entities/planet.js'
 import { Ship } from '../game/entities/ship.js'
@@ -131,6 +132,16 @@ export function setup(state: WorldState): WorldState {
   })
   deimos.id = 'deimos'
   mars.addMoon(deimos)
+
+  // Add test asteroid in the asteroid belt (between Mars and Jupiter)
+  const ceres = new Asteroid('Ceres', 473, {
+    anchor: sol,
+    radiusKm: 2.77 * Constants.AU, // Typical asteroid belt distance
+    speedKmPerSec: 17.9, // Orbital speed for asteroid belt
+    initialAngleRad: Math.PI / 8,
+  })
+  ceres.id = 'ceres'
+  state.addAsteroid(ceres)
 
   const pioneer = new Ship(
     {
