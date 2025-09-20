@@ -54,6 +54,7 @@ export class Moon extends GameObject implements MoonData {
 
   get orbit() {
     return {
+      orbit_type: 'circular' as const,
       parent_id: this.orbitalAnchor.id,
       average_radius_km: this.orbitalRadiusKm,
       km_per_sec: this.orbitalSpeedKmPerSec,

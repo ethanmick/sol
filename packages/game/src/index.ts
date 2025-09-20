@@ -1,7 +1,16 @@
 export { AsteroidSchema, type Asteroid } from './game/asteroid.js'
+export {
+  EllipticalOrbitSchema,
+  type EllipticalOrbit,
+} from './game/elliptical-orbit.js'
 export { GameObjectSchema, type GameObject } from './game/game-object.js'
 export { MoonSchema, type Moon } from './game/moon.js'
-export { OrbitSchema, type Orbit } from './game/orbit.js'
+export {
+  CircularOrbitSchema,
+  OrbitSchema,
+  type CircularOrbit,
+  type Orbit,
+} from './game/orbit.js'
 export { PlanetSchema, type Planet } from './game/planet.js'
 export { ShipSchema, type Ship } from './game/ship.js'
 export { StarSchema, type Star } from './game/star.js'
