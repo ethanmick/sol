@@ -1,4 +1,4 @@
-import type { Orbit, Planet as PlanetData } from '@space/game'
+import type { Asteroid as AsteroidData, Orbit } from '@space/game'
 import { Constants } from '../constants.js'
 import {
   calculateEllipticalPosition,
@@ -6,7 +6,6 @@ import {
 } from '../util/orbital-math.js'
 import type { Position } from '../util/position.js'
 import { GameObject } from './game-object.js'
-import { Moon } from './moon.js'
 
 interface CircularOrbitConfig {
   type: 'circular'
@@ -28,7 +27,7 @@ interface EllipticalOrbitConfig {
 
 type OrbitConfig = CircularOrbitConfig | EllipticalOrbitConfig
 
-export class Planet extends GameObject implements PlanetData {
+export class Asteroid extends GameObject implements AsteroidData {
   private readonly orbitalAnchor: GameObject
   private readonly orbitConfig: OrbitConfig
 
@@ -46,8 +45,6 @@ export class Planet extends GameObject implements PlanetData {
   private orbitalPeriodSec?: number
   private currentMeanAnomalyRad?: number
 
-  public moons: Moon[] = []
-
   constructor(name: string, public radius_km: number, orbit: OrbitConfig) {
     let initialPosition: Position
     const anchorPosition = orbit.anchor.position
@@ -58,8 +55,11 @@ export class Planet extends GameObject implements PlanetData {
         x: anchorPosition.x + orbit.radiusKm * Math.cos(initialAngle),
         y: anchorPosition.y + orbit.radiusKm * Math.sin(initialAngle),
       }
+
+      // Circular orbit properties will be initialized after super()
     } else {
       // For elliptical orbit, calculate initial position from orbital elements
+      // Use the proper orbital math to get the correct position at the initial mean anomaly
       const ellipticalOrbit = {
         orbit_type: 'elliptical' as const,
         parent_id: orbit.anchor.id,
@@ -68,20 +68,22 @@ export class Planet extends GameObject implements PlanetData {
         argument_of_periapsis_rad: orbit.argumentOfPeriapsisRad,
         mean_anomaly_at_epoch_rad: orbit.meanAnomalyAtEpochRad,
         orbital_period_sec: orbit.orbitalPeriodSec,
-        current_mean_anomaly_rad: orbit.meanAnomalyAtEpochRad,
+        current_mean_anomaly_rad: orbit.meanAnomalyAtEpochRad, // Start at epoch
       }
 
       initialPosition = calculateEllipticalPosition(
         ellipticalOrbit,
         anchorPosition
       )
+
+      // Elliptical orbit properties will be initialized after super()
     }
 
     super(initialPosition, name)
     this.orbitalAnchor = orbit.anchor
     this.orbitConfig = orbit
 
-    // Initialize orbit-specific properties
+    // Initialize orbit-specific properties after super()
     if (orbit.type === 'circular') {
       const initialAngle = orbit.initialAngleRad ?? 0
       this.orbitalRadiusKm = orbit.radiusKm
@@ -117,7 +119,7 @@ export class Planet extends GameObject implements PlanetData {
       this.position.y =
         anchorPosition.y + this.orbitalRadiusKm! * Math.sin(this.currentAngle)
     } else {
-      // For elliptical orbits, update position using Kepler's equation
+      // For elliptical orbits, update the mean anomaly and calculate new position
       const ellipticalOrbit = {
         orbit_type: 'elliptical' as const,
         parent_id: this.orbitalAnchor.id,
@@ -148,13 +150,6 @@ export class Planet extends GameObject implements PlanetData {
       this.position.x = newPosition.x
       this.position.y = newPosition.y
     }
-
-    // Update all moons
-    this.moons.forEach((moon) => moon.update(delta))
-  }
-
-  addMoon(moon: Moon): void {
-    this.moons.push(moon)
   }
 
   get orbit(): Orbit {
@@ -185,7 +180,6 @@ export class Planet extends GameObject implements PlanetData {
       ...super.toJSON(),
       radius_km: this.radius_km,
       orbit: this.orbit,
-      moons: this.moons.map((moon) => moon.toJSON()),
     }
   }
 }
