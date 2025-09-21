@@ -1,57 +1,153 @@
-import type { Planet as PlanetData } from '@space/game'
+import type { Orbit, Planet as PlanetData } from '@space/game'
 import { Constants } from '../constants.js'
+import {
+  calculateEllipticalPosition,
+  updateMeanAnomaly,
+} from '../util/orbital-math.js'
 import type { Position } from '../util/position.js'
 import { GameObject } from './game-object.js'
 import { Moon } from './moon.js'
 
-interface OrbitConfig {
+interface CircularOrbitConfig {
+  type: 'circular'
   anchor: GameObject
   radiusKm: number
   speedKmPerSec: number
   initialAngleRad?: number
 }
 
+interface EllipticalOrbitConfig {
+  type: 'elliptical'
+  anchor: GameObject
+  semiMajorAxisKm: number
+  eccentricity: number
+  argumentOfPeriapsisRad: number
+  meanAnomalyAtEpochRad: number
+  orbitalPeriodSec: number
+}
+
+type OrbitConfig = CircularOrbitConfig | EllipticalOrbitConfig
+
 export class Planet extends GameObject implements PlanetData {
   private readonly orbitalAnchor: GameObject
-  private readonly orbitalRadiusKm: number
-  private readonly orbitalSpeedKmPerSec: number
-  private readonly angularSpeedRadPerSec: number
-  private currentAngle: number
+  private readonly orbitConfig: OrbitConfig
+
+  // Circular orbit properties
+  private orbitalRadiusKm?: number
+  private orbitalSpeedKmPerSec?: number
+  private angularSpeedRadPerSec?: number
+  private currentAngle?: number
+
+  // Elliptical orbit properties
+  private semiMajorAxisKm?: number
+  private eccentricity?: number
+  private argumentOfPeriapsisRad?: number
+  private meanAnomalyAtEpochRad?: number
+  private orbitalPeriodSec?: number
+  private currentMeanAnomalyRad?: number
+
   public moons: Moon[] = []
 
   constructor(name: string, public radius_km: number, orbit: OrbitConfig) {
-    const initialAngle = orbit.initialAngleRad ?? 0
+    let initialPosition: Position
     const anchorPosition = orbit.anchor.position
-    const initialPosition: Position = {
-      x: anchorPosition.x + orbit.radiusKm * Math.cos(initialAngle),
-      y: anchorPosition.y + orbit.radiusKm * Math.sin(initialAngle),
+
+    if (orbit.type === 'circular') {
+      const initialAngle = orbit.initialAngleRad ?? 0
+      initialPosition = {
+        x: anchorPosition.x + orbit.radiusKm * Math.cos(initialAngle),
+        y: anchorPosition.y + orbit.radiusKm * Math.sin(initialAngle),
+      }
+    } else {
+      // For elliptical orbit, calculate initial position from orbital elements
+      const ellipticalOrbit = {
+        orbit_type: 'elliptical' as const,
+        parent_id: orbit.anchor.id,
+        semi_major_axis_km: orbit.semiMajorAxisKm,
+        eccentricity: orbit.eccentricity,
+        argument_of_periapsis_rad: orbit.argumentOfPeriapsisRad,
+        mean_anomaly_at_epoch_rad: orbit.meanAnomalyAtEpochRad,
+        orbital_period_sec: orbit.orbitalPeriodSec,
+        current_mean_anomaly_rad: orbit.meanAnomalyAtEpochRad,
+      }
+
+      initialPosition = calculateEllipticalPosition(
+        ellipticalOrbit,
+        anchorPosition
+      )
     }
 
     super(initialPosition, name)
     this.orbitalAnchor = orbit.anchor
-    this.orbitalRadiusKm = orbit.radiusKm
-    this.orbitalSpeedKmPerSec = orbit.speedKmPerSec
-    this.currentAngle = initialAngle
-    this.angularSpeedRadPerSec =
-      this.orbitalSpeedKmPerSec / this.orbitalRadiusKm
+    this.orbitConfig = orbit
+
+    // Initialize orbit-specific properties
+    if (orbit.type === 'circular') {
+      const initialAngle = orbit.initialAngleRad ?? 0
+      this.orbitalRadiusKm = orbit.radiusKm
+      this.orbitalSpeedKmPerSec = orbit.speedKmPerSec
+      this.currentAngle = initialAngle
+      this.angularSpeedRadPerSec =
+        this.orbitalSpeedKmPerSec / this.orbitalRadiusKm
+    } else {
+      this.semiMajorAxisKm = orbit.semiMajorAxisKm
+      this.eccentricity = orbit.eccentricity
+      this.argumentOfPeriapsisRad = orbit.argumentOfPeriapsisRad
+      this.meanAnomalyAtEpochRad = orbit.meanAnomalyAtEpochRad
+      this.orbitalPeriodSec = orbit.orbitalPeriodSec
+      this.currentMeanAnomalyRad = orbit.meanAnomalyAtEpochRad
+    }
   }
 
   update(delta: number): void {
     // Convert ms delta to seconds so we can use real-world orbital velocities.
     const deltaSeconds = delta / 1000
 
-    this.currentAngle +=
-      this.angularSpeedRadPerSec * deltaSeconds * Constants.GAME_SPEED
+    if (this.orbitConfig.type === 'circular') {
+      this.currentAngle! +=
+        this.angularSpeedRadPerSec! * deltaSeconds * Constants.GAME_SPEED
 
-    // Wrap angle to keep it between 0 and 2π
-    this.currentAngle = this.currentAngle % (2 * Math.PI)
+      // Wrap angle to keep it between 0 and 2π
+      this.currentAngle = this.currentAngle! % (2 * Math.PI)
 
-    // Calculate new position using polar coordinates relative to the orbit anchor.
-    const anchorPosition = this.orbitalAnchor.position
-    this.position.x =
-      anchorPosition.x + this.orbitalRadiusKm * Math.cos(this.currentAngle)
-    this.position.y =
-      anchorPosition.y + this.orbitalRadiusKm * Math.sin(this.currentAngle)
+      // Calculate new position using polar coordinates relative to the orbit anchor.
+      const anchorPosition = this.orbitalAnchor.position
+      this.position.x =
+        anchorPosition.x + this.orbitalRadiusKm! * Math.cos(this.currentAngle)
+      this.position.y =
+        anchorPosition.y + this.orbitalRadiusKm! * Math.sin(this.currentAngle)
+    } else {
+      // For elliptical orbits, update position using Kepler's equation
+      const ellipticalOrbit = {
+        orbit_type: 'elliptical' as const,
+        parent_id: this.orbitalAnchor.id,
+        semi_major_axis_km: this.semiMajorAxisKm!,
+        eccentricity: this.eccentricity!,
+        argument_of_periapsis_rad: this.argumentOfPeriapsisRad!,
+        mean_anomaly_at_epoch_rad: this.meanAnomalyAtEpochRad!,
+        orbital_period_sec: this.orbitalPeriodSec!,
+        current_mean_anomaly_rad: this.currentMeanAnomalyRad!,
+      }
+
+      // Update mean anomaly based on elapsed time
+      this.currentMeanAnomalyRad = updateMeanAnomaly(
+        ellipticalOrbit,
+        deltaSeconds
+      )
+
+      // Update the orbit object with new mean anomaly for position calculation
+      ellipticalOrbit.current_mean_anomaly_rad = this.currentMeanAnomalyRad
+
+      // Calculate new position using Kepler's equation
+      const anchorPosition = this.orbitalAnchor.position
+      const newPosition = calculateEllipticalPosition(
+        ellipticalOrbit,
+        anchorPosition
+      )
+
+      this.position.x = newPosition.x
+      this.position.y = newPosition.y
+    }
 
     // Update all moons
     this.moons.forEach((moon) => moon.update(delta))
@@ -61,12 +157,26 @@ export class Planet extends GameObject implements PlanetData {
     this.moons.push(moon)
   }
 
-  get orbit() {
-    return {
-      parent_id: this.orbitalAnchor.id,
-      average_radius_km: this.orbitalRadiusKm,
-      km_per_sec: this.orbitalSpeedKmPerSec,
-      current_angle_rad: this.currentAngle,
+  get orbit(): Orbit {
+    if (this.orbitConfig.type === 'circular') {
+      return {
+        orbit_type: 'circular' as const,
+        parent_id: this.orbitalAnchor.id,
+        average_radius_km: this.orbitalRadiusKm!,
+        km_per_sec: this.orbitalSpeedKmPerSec!,
+        current_angle_rad: this.currentAngle!,
+      }
+    } else {
+      return {
+        orbit_type: 'elliptical' as const,
+        parent_id: this.orbitalAnchor.id,
+        semi_major_axis_km: this.semiMajorAxisKm!,
+        eccentricity: this.eccentricity!,
+        argument_of_periapsis_rad: this.argumentOfPeriapsisRad!,
+        mean_anomaly_at_epoch_rad: this.meanAnomalyAtEpochRad!,
+        orbital_period_sec: this.orbitalPeriodSec!,
+        current_mean_anomaly_rad: this.currentMeanAnomalyRad!,
+      }
     }
   }
 

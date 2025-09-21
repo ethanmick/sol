@@ -17,7 +17,12 @@ export const createShipFlyToHandler = (state: WorldState) => {
     }
 
     // TODO: Support flying to types of bodies other than planets
-    const destination = state.planets[request.target_id]
+
+    const targets = {
+      ...state.planets,
+      ...state.asteroids,
+    }
+    const destination = targets[request.target_id]
 
     if (!destination) {
       return {

@@ -1,4 +1,5 @@
 import { Constants } from '@space/game'
+import { Asteroid } from '../game/entities/asteroid.js'
 import { Moon } from '../game/entities/moon.js'
 import { Planet } from '../game/entities/planet.js'
 import { Ship } from '../game/entities/ship.js'
@@ -87,6 +88,7 @@ export function setup(state: WorldState): WorldState {
       initialAngleRad,
     }) => {
       const planet = new Planet(name, radiusKm, {
+        type: 'circular',
         anchor: sol,
         radiusKm: orbitRadiusKm,
         speedKmPerSec: orbitSpeedKmPerSec,
@@ -97,6 +99,19 @@ export function setup(state: WorldState): WorldState {
       return planet
     }
   )
+
+  // Add Pluto with its highly elliptical orbit
+  const pluto = new Planet('Pluto', 1_188.3, {
+    type: 'elliptical',
+    anchor: sol,
+    semiMajorAxisKm: 39.48 * Constants.AU, // Average distance from Sun
+    eccentricity: 0.2488, // Notably eccentric for a planet
+    argumentOfPeriapsisRad: 1.925, // ~110.3 degrees
+    meanAnomalyAtEpochRad: Math.random() * 2 * Math.PI,
+    orbitalPeriodSec: 247.68 * 365.25 * 24 * 3600, // ~248 Earth years
+  })
+  pluto.id = 'pluto'
+  state.addPlanet(pluto)
 
   // Find Earth and Mars for moon placement
   const earth = planets.find((p) => p.id === 'earth')!
@@ -131,6 +146,59 @@ export function setup(state: WorldState): WorldState {
   })
   deimos.id = 'deimos'
   mars.addMoon(deimos)
+
+  // Add test asteroid in the asteroid belt (between Mars and Jupiter)
+  const ceres = new Asteroid('Ceres', 473, {
+    type: 'circular',
+    anchor: sol,
+    radiusKm: 2.77 * Constants.AU, // Typical asteroid belt distance
+    speedKmPerSec: 17.9, // Orbital speed for asteroid belt
+    initialAngleRad: Math.PI / 8,
+  })
+  ceres.id = 'ceres'
+  state.addAsteroid(ceres)
+
+  // Add new asteroid with elliptical orbit
+  // This asteroid has periapsis near Earth's orbit (1 AU) and apoapsis in the asteroid belt
+  const eros = new Asteroid('Eros', 8.4, {
+    type: 'elliptical',
+    anchor: sol,
+    semiMajorAxisKm: 1.885 * Constants.AU, // Semi-major axis between periapsis and apoapsis
+    eccentricity: 0.47, // Moderate eccentricity (periapsis ~1 AU, apoapsis ~2.77 AU)
+    argumentOfPeriapsisRad: Math.PI / 4, // 45 degrees rotation of ellipse
+    meanAnomalyAtEpochRad: 0, // Start at periapsis
+    orbitalPeriodSec: 2.59 * 365.25 * 24 * 3600, // ~2.59 years orbital period
+  })
+  eros.id = 'eros'
+  state.addAsteroid(eros)
+
+  // Add a collection of inner solar system asteroids with varied elliptical orbits
+  // All stay within Mars orbit (1.52 AU)
+  for (let i = 1; i <= 20; i++) {
+    // Generate varied but constrained orbital parameters
+    const semiMajorAxis = 0.7 + Math.random() * 0.7 // 0.7 to 1.4 AU
+    let eccentricity = 0.1 + Math.random() * 0.35 // 0.1 to 0.45
+
+    // Ensure aphelion doesn't exceed Mars orbit
+    const aphelion = semiMajorAxis * (1 + eccentricity)
+    if (aphelion > 1.5) {
+      // Adjust eccentricity to keep within bounds
+      const maxEccentricity = 1.5 / semiMajorAxis - 1
+      eccentricity = Math.min(eccentricity, maxEccentricity)
+    }
+
+    const asteroid = new Asteroid(`Asteroid-${i}`, 1 + Math.random() * 4, {
+      type: 'elliptical',
+      anchor: sol,
+      semiMajorAxisKm: semiMajorAxis * Constants.AU,
+      eccentricity: eccentricity,
+      argumentOfPeriapsisRad: (i * Math.PI) / 10, // Evenly distributed orientations
+      meanAnomalyAtEpochRad: Math.random() * 2 * Math.PI,
+      orbitalPeriodSec: Math.pow(semiMajorAxis, 1.5) * 365.25 * 24 * 3600, // Kepler's 3rd law
+    })
+    asteroid.id = `asteroid-${i}`
+    state.addAsteroid(asteroid)
+  }
 
   const pioneer = new Ship(
     {
